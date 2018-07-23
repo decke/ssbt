@@ -28,22 +28,26 @@
 # list hosts and their backup status
 #
 core::status(){
-    local _host _keep
-    local _g_keep
+    local _host _last_backup _last_date
     local _format="%s^%s\n"
-
-    config::core::get "_g_keep" "keep_archives" "3"
+    local _date_format="%Y-%m-%d %H:%M"
 
     # pass everything below here to column(1)
     {
-        printf "${_format}" "NAME" "KEEP-ARCHIVES"
+        printf "${_format}" "NAME" "LAST BACKUP"
 
         ls -1 "${ssbt_dir}" 2>/dev/null | \
         while read _host; do
-            config::load "${ssbt_dir}/${_host}/${_host}.conf"
-            config::get "_keep" "keep_archives" ${_g_keep}
+            _last_backup=`ls -1r "${ssbt_dir}/${_host}" | grep -v ".sha256" | head -1 2>/dev/null`
+            if [ -n "${_last_backup}" ] ; then
+                _last_backup=${_last_backup##*-}
+                _last_backup=${_last_backup%%.*}
+                _last_date=`date -j ${_last_backup} +"${_date_format}"`
+            else
+                _last_date="none"
+            fi
 
-            printf "${_format}" "${_host}" "${_keep}"
+            printf "${_format}" "${_host}" "${_last_date}"
         done
     } | column -ts^
 }
