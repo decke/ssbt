@@ -52,10 +52,14 @@ core::list(){
 #
 #
 core::pull(){
-    local _host
+    local _host _filter
+
+    _filter="$1"
 
     ls -1 "${ssbt_dir}" 2>/dev/null | \
     while read _host; do
+        [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
+
         core::_pull "${_host}"
     done
 }
@@ -78,6 +82,8 @@ core::_pull(){
     config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
 
     rm -f ${_staging_dir}/* || util::err "unable to clean staging directory ${_staging_dir}"
+
+    util::log "${_host}" "checking ${_remote_dir} on ${_host}"
 
     for _remote_file in `echo "ls ${_remote_dir}" | \
         sftp -qb - "${_user}@${_host}" | grep -v "sftp>" | grep "^${_remote_dir}" `
