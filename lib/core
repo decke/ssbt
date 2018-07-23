@@ -24,15 +24,15 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# 'ssbt list'
-# list hosts
+# 'ssbt status'
+# list hosts and their backup status
 #
-core::list(){
+core::status(){
     local _host _keep
     local _g_keep
     local _format="%s^%s\n"
 
-    config::core::get "_g_keep" "keep" "3"
+    config::core::get "_g_keep" "keep_archives" "3"
 
     # pass everything below here to column(1)
     {
@@ -41,7 +41,7 @@ core::list(){
         ls -1 "${ssbt_dir}" 2>/dev/null | \
         while read _host; do
             config::load "${ssbt_dir}/${_host}/${_host}.conf"
-            config::get "_keep" "keep" ${_g_keep}
+            config::get "_keep" "keep_archives" ${_g_keep}
 
             printf "${_format}" "${_host}" "${_keep}"
         done
@@ -75,7 +75,7 @@ core::_pull(){
     config::core::get "_local_user" "local_user" "backup"
     config::core::get "_local_group" "local_group" "backup"
 
-    config::core::get "_g_user" "user" "backup"
+    config::core::get "_g_user" "remote_user" "backup"
     config::get "_user" "user" ${_g_user}
 
     config::core::get "_g_remote_dir" "remote_dir" "/data"
