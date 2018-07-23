@@ -90,10 +90,12 @@ A global config file exists in `/backup/.config/ssbt.conf`:
     local_group = backup
     remote_user = backup
     keep_archives = 3
+    maxage = 86400
 
 For each host some parameters can be set individuall in `/backup/{host}/{host}.conf`:
 
     user = backup
     remote_dir = /data
     keep_archives = 3
+    maxage = 86400
 

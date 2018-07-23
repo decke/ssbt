@@ -189,3 +189,12 @@ util::checkyesno(){
         *)  return 0 ;;		
     esac
 }
+
+util::datediff(){
+    local _stamp1 _stamp2
+
+    _stamp1=`date -j $1 '+%s'`
+    _stamp2=`date '+%s'`
+
+    printf "%s" `expr ${_stamp2} - ${_stamp1}`
+}

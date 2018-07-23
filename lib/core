@@ -28,9 +28,12 @@
 # list hosts and their backup status
 #
 core::status(){
-    local _host _last_backup _last_date
-    local _format="%s^%s\n"
-    local _date_format="%Y-%m-%d %H:%M"
+    local _host _last_backup _last_date _date_diff
+    local _format="%s^%b\n"
+    local _date_format="%Y/%m/%d %H:%M"
+    local _g_datediff_max _datediff_max
+
+    config::core::get "_g_datediff_max" "maxage" "86400"
 
     # pass everything below here to column(1)
     {
@@ -38,11 +41,21 @@ core::status(){
 
         ls -1 "${ssbt_dir}" 2>/dev/null | \
         while read _host; do
+            config::get "_datediff_max" "maxage" ${_g_datediff_max}
+
             _last_backup=`ls -1r "${ssbt_dir}/${_host}" | grep -v ".sha256" | head -1 2>/dev/null`
             if [ -n "${_last_backup}" ] ; then
                 _last_backup=${_last_backup##*-}
                 _last_backup=${_last_backup%%.*}
                 _last_date=`date -j ${_last_backup} +"${_date_format}"`
+
+                _date_diff=`util::datediff "${_last_backup}"`
+
+                if [ "${_date_diff}" -gt ${_datediff_max} ]; then
+                    _last_date="\033[0;31m${_last_date}\033[0m"
+                else
+                    _last_date="\033[0;32m${_last_date}\033[0m"
+                fi
             else
                 _last_date="none"
             fi
