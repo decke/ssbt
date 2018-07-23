@@ -47,3 +47,61 @@ core::list(){
         done
     } | column -ts^
 }
+
+## 'ssbt pull'
+#
+#
+core::pull(){
+    local _host
+
+    ls -1 "${ssbt_dir}" 2>/dev/null | \
+    while read _host; do
+        core::_pull "$@"
+    done
+}
+
+core::_pull(){
+    local _host _staging_dir _file _remote_file _local_user _local_group
+    local _user _remote_dir
+    local _g_user _g_remote_dir
+
+    config::core::get "_staging_dir" "staging_dir" "~/staging"
+    config::core::get "_local_user" "local_user" "backup"
+    config::core::get "_local_group" "local_group" "backup"
+
+    config::core::get "_g_user" "user" "backup"
+    config::get "_user" "user" ${_g_user}
+
+    config::core::get "_g_remote_dir" "remote_dir" "/data"
+    config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
+
+    rm -f ${_staging_dir}/* || util::err "unable to clean staging directory ${_staging_dir}"
+
+    for _remote_file in `echo "ls ${_remote_dir}" | \
+        sftp -b - "${_user}@${_host}" | grep -v "sftp>" | grep "^${_remote_dir}" `
+    do
+        _file=${_staging_dir}/${_remote_file##*/}
+
+        util::log "host" "${_host}" "copying ${_file} to ${_staging_dir}"
+        echo "get "${_remote_file} ${_staging_dir}/" | sftp -b - "${_user}@${_host}" \
+            || util:log "host "${_host}" "sftp get ${_remote_file} failed"
+
+        util::log "host" "${_host}" "generating sha256 checksum file"
+        sha256 "${_file}" > "${_file}.sha256" \
+            || util::log "host" "${_host}" "sha256 ${_file} failed"
+
+        util::log "host" "${_host}" "moving ${_file} to ${ssbt_dir}/${_host}"
+        chown ${_local_user}:${_local_group} "${_staging_dir}"/* \
+            || util::log "host" "${_host}" "chown ${_local_user}:${local_group} failed on ${_staging_dir}"
+
+        mv -n "${_file}" "${ssbt_dir}/${_host}" \
+            || util::log "host" "${_host}" "Moving ${_file} to ${ssbt_dir}/${_host} failed"
+
+        mv -n "${_file}.sha256" "${ssbt_dir}/${_host}" \
+            || util::log "host" "${_host}" "Moving ${_file}.sha256 to ${ssbt_dir}/${_host} failed"
+
+        util::log "host" "${_host}" "removing ${_remote_file} on ${_host}"
+        echo "rm ${_remote_file}" | sftp -b - "${_user}@${_host}" \
+            || util::log "host" "${_host}" "sftp rm ${_remote_file} failed"
+    done
+}
