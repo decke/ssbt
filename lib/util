@@ -85,16 +85,15 @@ util::warn(){
 #
 util::log_rotate(){
     local _type="$1"
-    local _lf="ssbt.log"
     local _file _size _host
 
     case "${_type}" in
         host)
             _host="$2"
-            _file="${ssbt_dir}/${_host}/${_lf}"
+            _file="${ssbt_dir}/${_host}/.${_host}.log"
             ;;
         system)
-            _file="${ssbt_dir}/${_lf}"
+            _file="${ssbt_dir}/.config/ssbt.log"
             ;;
     esac
 
@@ -109,7 +108,7 @@ util::log_rotate(){
     fi
 }
 
-# log to file
+# log to file only
 # writes the date and a message to the specified log
 # the global log is in $ssbt_dir/ssbt.log
 # host logs are $ssbt_dir/{host}/ssbt.log
@@ -118,19 +117,18 @@ util::log_rotate(){
 # @param optional string _host if _type=host, the hostname, otherwise do not provide at all
 # @param string _message the message to log
 #
-util::log(){
+util::logonly(){
     local _type="$1"
-    local _lf="ssbt.log"
     local _host _message _file _date
 
     case "${_type}" in
         host)
             _host="$2"
-            _file="${ssbt_dir}/${_host}/${_lf}"
+            _file="${ssbt_dir}/${_host}/.${_host}.log"
             shift 2
             ;;
         system)
-            _file="${ssbt_dir}/${_lf}"
+            _file="${ssbt_dir}/.config/ssbt.log"
             shift 1
             ;;
     esac
@@ -143,29 +141,17 @@ util::log(){
 
 # write content to a file, and log what we
 # did to the host log file
-# it's useful to be able to see what files ssbt is creating
-# and the contents so we write that to the log.
-# The file is created in $ssbt_dir/{host}
 #
-# @param string _type=write|appnd create file or append to it
 # @param string _host the hostname
 # @param string _file the file name to write to
 # @param string _message the data to write
 #
-util::log_and_write(){
-    local _type="$1"
-    local _host="$2"
-    local _file="${ssbt_dir}/${_host}/$3"
-    local _message="$4"
+util::log(){
+    local _host="$1"
+    shift 1
 
-    if [ "${_type}" = "write" ]; then
-        util::log "host" "${_host}" "create file ${_file}"
-        echo "${_message}" > "${_file}"
-    else
-        echo "${_message}" >> "${_file}"
-    fi
-
-    util::log "host" "${_host}" " -> ${_message}"
+    echo "$(date +'%b %d %T'): $1"
+    util::log "host" "${_host}" "$1"
 }
 
 # confirm yes or no
