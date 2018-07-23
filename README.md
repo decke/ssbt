@@ -80,3 +80,20 @@ directory.
 ### Backup master
 
 
+## Configuration
+
+A global config file exists in `/backup/.config/ssbt.conf`:
+
+    staging_dir = /home/backup/staging
+    remote_dir = /data
+    local_user = backup
+    local_group = backup
+    remote_user = backup
+    keep_archives = 3
+
+For each host some parameters can be set individuall in `/backup/{host}/{host}.conf`:
+
+    user = backup
+    remote_dir = /data
+    keep_archives = 3
+
