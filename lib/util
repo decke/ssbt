@@ -151,7 +151,7 @@ util::log(){
     shift 1
 
     echo "$(date +'%b %d %T'): $1"
-    util::log "host" "${_host}" "$1"
+    util::logonly "host" "${_host}" "$1"
 }
 
 # confirm yes or no
