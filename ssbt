@@ -38,6 +38,7 @@ fi
 
 # load libs
 
+. "${LIB}/core"
 . "${LIB}/cmd"
 . "${LIB}/config"
 . "${LIB}/util"
