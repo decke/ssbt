@@ -1,0 +1,205 @@
+#!/bin/sh
+#-------------------------------------------------------------------------+
+# Copyright (C) 2016 Matt Churchyard (churchers@gmail.com)
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+# show version
+#
+util::version(){
+    echo "ssbt: simple stupid backup tool v${VERSION}"
+}
+
+# show version & usage information
+# we exit after running this
+#
+util::usage(){
+    util::version
+    cat << EOT
+Usage: ssbt ...
+    cron
+    pull <host>
+    status <host>
+    usage
+    version
+EOT
+    exit 1
+}
+
+# err
+# display an error message and exit immediately
+#
+# @param string - the message to display
+#
+util::err(){
+    echo "${0}: ERROR: $1" >&2
+    exit 1
+}
+
+# err_inline
+# display an error inline with informational output
+#
+# @param string - message to display
+#
+util::err_inline(){
+    echo "  ! $1"
+    exit 1
+}
+
+# warn
+# display warning, but do not exit
+#
+# @param string - the message to display
+#
+util::warn(){
+    echo "${0}: WARNING: $1" >&2
+}
+
+# log_rotate
+# simple rotation of log files
+# if we hit 1MB, which should cover a fair amount of history,
+# we move existing log and and create a new one.
+# one keep 1 previous file, as that should be enough
+#
+# @param string _type whether to rotate host or main log
+#
+util::log_rotate(){
+    local _type="$1"
+    local _lf="ssbt.log"
+    local _file _size _host
+
+    case "${_type}" in
+        host)
+            _host="$2"
+            _file="${ssbt_dir}/${_host}/${_lf}"
+            ;;
+        system)
+            _file="${ssbt_dir}/${_lf}"
+            ;;
+    esac
+
+    if [ -e "${_file}" ]; then
+        _size=$(stat -f %z "${_file}")
+
+        if [ -n "${_size}" -a "${_size}" -ge 1048576 ]; then
+            unlink "${_file}.0.gz" >/dev/null 2>&1
+            mv "${_file}" "${_file}.0"
+            gzip "${_file}.0"
+        fi
+    fi
+}
+
+# log to file
+# writes the date and a message to the specified log
+# the global log is in $ssbt_dir/ssbt.log
+# host logs are $ssbt_dir/{host}/ssbt.log
+#
+# @param string _type=host|system log to global ssbt log or host
+# @param optional string _host if _type=host, the hostname, otherwise do not provide at all
+# @param string _message the message to log
+#
+util::log(){
+    local _type="$1"
+    local _lf="ssbt.log"
+    local _host _message _file _date
+
+    case "${_type}" in
+        host)
+            _host="$2"
+            _file="${ssbt_dir}/${_host}/${_lf}"
+            shift 2
+            ;;
+        system)
+            _file="${ssbt_dir}/${_lf}"
+            shift 1
+            ;;
+    esac
+
+    while [ -n "$1" ]; do
+      echo "$(date +'%b %d %T'): $1" >> "${_file}"
+      shift
+    done
+}
+
+# write content to a file, and log what we
+# did to the host log file
+# it's useful to be able to see what files ssbt is creating
+# and the contents so we write that to the log.
+# The file is created in $ssbt_dir/{host}
+#
+# @param string _type=write|appnd create file or append to it
+# @param string _host the hostname
+# @param string _file the file name to write to
+# @param string _message the data to write
+#
+util::log_and_write(){
+    local _type="$1"
+    local _host="$2"
+    local _file="${ssbt_dir}/${_host}/$3"
+    local _message="$4"
+
+    if [ "${_type}" = "write" ]; then
+        util::log "host" "${_host}" "create file ${_file}"
+        echo "${_message}" > "${_file}"
+    else
+        echo "${_message}" >> "${_file}"
+    fi
+
+    util::log "host" "${_host}" " -> ${_message}"
+}
+
+# confirm yes or no
+#
+# @param string _msh message to display
+# @return int success if confirmed
+#
+util::confirm(){
+    local _msg="$1"
+    local _resp
+
+    while read -p "${_msg} (y/n)? " _resp; do
+        case "${_resp}" in
+            y*) return 0 ;;
+            n*) return 1 ;;
+        esac
+    done
+}
+
+# our own checkyesno copy
+# doesn't warn for unsupported values
+# also returns as 'yes' unless value is specifically no/off/false/0 
+#
+# @param _value the value to test
+# @return int 1 if set to "off/false/no/0", 0 otherwise
+#
+util::checkyesno(){
+    local _value="$1"
+
+    [ -z "${_value}" ] && return 1
+
+    case "$_value" in
+        [Nn][Oo]|[Ff][Aa][Ll][Ss][Ee]|[Oo][Ff][Ff]|0)
+            return 1 ;;
+        *)  return 0 ;;		
+    esac
+}

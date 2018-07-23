@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# $FreeBSD$
+
+# PROVIDE: ssbt
+# REQUIRE: NETWORKING SERVERS dmesg
+# BEFORE: 
+# KEYWORD: shutdown nojail
+
+. /etc/rc.subr
+
+: ${ssbt_enable="NO"}
+
+name=ssbt
+desc="Pull backups automatically on boot"
+rcvar=ssbt_enable
+
+load_rc_config $name
+
+command="/usr/local/sbin/${name}"
+start_cmd="${name}_start"
+
+ssbt_start()
+{
+    ${command} cron >/dev/null &
+}
+
+run_rc_command "$1"

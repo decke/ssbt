@@ -1,0 +1,87 @@
+#!/bin/sh
+#-------------------------------------------------------------------------+
+# Copyright (C) 2016 Matt Churchyard (churchers@gmail.com)
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted providing that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+CMD_VALID_LIST="cron,pull,status,usage,version"
+
+# cmd: ssbt ...
+#
+# process the command line to see which function is requested
+#
+# @param string _cmd the command right after 'ssbt '
+#
+cmd::parse(){
+    local _cmd
+
+    # try to find a matching command
+    cmd::find "_cmd" "$1" "${CMD_VALID_LIST}" || util::usage
+    shift
+
+    case "${_cmd}" in
+        cron)      core::cron "$@" ;;
+        pull)      core::pull "$@" ;;
+        status)    core::status "$@" ;;
+        usage)     util::usage ;;
+        version)   util::version && exit ;;
+        *)         util::err "unknown command '${_user_cmd}'. please run 'ssbt usage' or view the manpage for help" ;;
+    esac
+}
+
+# try to match part of a command name against a list of valid commands
+# if we find more than one match we return an error
+# if we only get one match, return the full command name
+#
+# @param string _var variable to put full command name into
+# @param string _user_cmd the value provided by the user
+# @param string _valid comma-separated list of valid choices
+# @return success if we find one match
+#
+cmd::find(){
+    local _var="$1"
+    local _user_cmd="$2"
+    local _valid="$3"
+    local _opt _choice _found=""
+    local IFS=","
+
+    [ -n "${_user_cmd}" ] || util::err "no command specified"
+
+    for _opt in ${_valid}; do
+        # exact match?
+        if [ "${_user_cmd}" = "${_opt}" ]; then
+            setvar "${_var}" "${_opt}"
+            return 0
+        fi
+
+        if echo "${_opt}" | grep -iqs "^${_user_cmd}"; then
+           [ -n "${_found}" ] && util::err "ambiguous command '${_user_cmd}'"
+
+           _found=1
+           _choice="${_opt}"
+        fi
+    done
+
+    [ -z "${_found}" ] && return 1
+    setvar "${_var}" "${_choice}"
+}
