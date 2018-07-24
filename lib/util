@@ -37,6 +37,7 @@ util::usage(){
     util::version
     cat << EOT
 Usage: ssbt ...
+    clean <host>
     cron
     pull <host>
     status <host>

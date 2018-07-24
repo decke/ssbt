@@ -24,6 +24,41 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# 'ssbt clean'
+# Cleanup archive from old backups
+#
+core::clean(){
+    local _host _filter _keep _g_keep
+
+    _filter="$1"
+
+    config::core::get "_g_keep" "keep" "3"
+
+    ls -1 "${ssbt_dir}" 2>/dev/null | \
+    while read _host; do
+        [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
+
+        config::load "${_host}"
+        config::get "_keep" "keep" ${_g_keep}
+
+        _keep=`expr ${_keep} + 1`
+
+        for _file in `ls -1r "${ssbt_dir}/${_host}/" | grep -v ".sha256" | tail -n +${_keep} 2>/dev/null`
+        do
+            _file="${ssbt_dir}/${_host}/${_file}"
+
+            util::log "${_host}" "Removing ${_file}"
+            rm "${_file}" || util::err "Unable to remove ${_file}"
+
+            if [ -f "${_file}.sha256" ]; then
+                _file="${_file}.sha256"
+                util::log "${_host}" "Removing ${_file}"
+                rm "${_file}" || util::err "Unable to remove ${_file}"
+            fi
+        done
+    done
+}
+
 # 'ssbt status'
 # list hosts and their backup status
 #
