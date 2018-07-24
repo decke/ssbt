@@ -27,8 +27,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # get libs
-if [ -e "./lib" ]; then
-   LIB="./lib"
+if [ -e "${0##*/}/lib" ]; then
+   LIB="${0##*/}/lib"
 elif [ -e "/usr/local/lib/ssbt" ]; then
    LIB="/usr/local/lib/ssbt"
 else
