@@ -65,7 +65,7 @@ cmd::find(){
     local _opt _choice _found=""
     local IFS=","
 
-    [ -n "${_user_cmd}" ] || util::err "no command specified"
+    [ -n "${_user_cmd}" ] || return 1
 
     for _opt in ${_valid}; do
         # exact match?
