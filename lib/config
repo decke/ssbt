@@ -35,7 +35,8 @@
 # @modifies SSBT_CONFIG
 #
 config::load(){
-    local _file="$1"
+    local _host="$1"
+    local _file="${ssbt_dir}/${_host}/.ssbt.conf"
 
     # read config file
     # we kick out any lines that don't start with a letter,
@@ -74,7 +75,7 @@ config::get(){
 # @modifies SSBT_CORE_CONFIG
 #
 config::core::load(){
-    SSBT_CORE_CONFIG=$(grep '^[a-z]' "${ssbt_dir}/.config/ssbt.conf" 2>/dev/null | awk -F# '{print $1}' | sed -e 's@ *$@@' | tr -d '"')
+    SSBT_CORE_CONFIG=$(grep '^[a-z]' "${ssbt_dir}/.ssbt.conf" 2>/dev/null | awk -F# '{print $1}' | sed -e 's@ *$@@' | tr -d '"')
 }
 
 # get a value from core config

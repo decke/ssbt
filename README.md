@@ -82,20 +82,21 @@ directory.
 
 ## Configuration
 
-A global config file exists in `/backup/.config/ssbt.conf`:
+A global config file exists in `/backup/.ssbt.conf`:
 
-    staging_dir = /home/backup/staging
-    remote_dir = /data
-    local_user = backup
-    local_group = backup
-    remote_user = backup
-    keep_archives = 3
-    maxage = 86400
+    staging_dir="/home/backup/staging"
+    remote_dir="/data"
+    local_user="backup"
+    local_group="backup"
+    remote_user="backup"
+    keep_archives=3
+    maxage=86400
 
-For each host some parameters can be set individuall in `/backup/{host}/{host}.conf`:
+For each host some parameters can be set individuall in `/backup/{host}/.ssbt.conf`:
 
-    user = backup
-    remote_dir = /data
-    keep_archives = 3
-    maxage = 86400
+    type="sftp|manual"
+    user="backup"
+    remote_dir="/data"
+    keep_archives=3
+    maxage=86400
 

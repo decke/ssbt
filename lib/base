@@ -33,7 +33,6 @@ load_rc_config "ssbt"
 
 # create directories as needed
 [ ! -d "${ssbt_dir}" ] && util::err "\$ssbt_dir has not been configured or is not a valid directory"
-[ ! -d "${ssbt_dir}/.config" ] && mkdir "${ssbt_dir}/.config"
 
 # load core configuration
 config::core::load

@@ -90,10 +90,10 @@ util::log_rotate(){
     case "${_type}" in
         host)
             _host="$2"
-            _file="${ssbt_dir}/${_host}/.${_host}.log"
+            _file="${ssbt_dir}/${_host}/.ssbt.log"
             ;;
         system)
-            _file="${ssbt_dir}/.config/ssbt.log"
+            _file="${ssbt_dir}/.ssbt.log"
             ;;
     esac
 
@@ -110,8 +110,8 @@ util::log_rotate(){
 
 # log to file only
 # writes the date and a message to the specified log
-# the global log is in $ssbt_dir/ssbt.log
-# host logs are $ssbt_dir/{host}/ssbt.log
+# the global log is in $ssbt_dir/.ssbt.log
+# host logs are $ssbt_dir/{host}/.ssbt.log
 #
 # @param string _type=host|system log to global ssbt log or host
 # @param optional string _host if _type=host, the hostname, otherwise do not provide at all
@@ -124,11 +124,11 @@ util::logonly(){
     case "${_type}" in
         host)
             _host="$2"
-            _file="${ssbt_dir}/${_host}/.${_host}.log"
+            _file="${ssbt_dir}/${_host}/.ssbt.log"
             shift 2
             ;;
         system)
-            _file="${ssbt_dir}/.config/ssbt.log"
+            _file="${ssbt_dir}/.ssbt.log"
             shift 1
             ;;
     esac
