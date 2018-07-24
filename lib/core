@@ -32,14 +32,14 @@ core::clean(){
 
     _filter="$1"
 
-    config::core::get "_g_keep" "keep" "3"
+    config::core::get "_g_keep" "keep_archives" "3"
 
     ls -1 "${ssbt_dir}" 2>/dev/null | \
     while read _host; do
         [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
 
         config::load "${_host}"
-        config::get "_keep" "keep" ${_g_keep}
+        config::get "_keep" "keep_archives" ${_g_keep}
 
         _keep=`expr ${_keep} + 1`
 
