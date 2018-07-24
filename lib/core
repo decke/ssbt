@@ -41,6 +41,7 @@ core::status(){
 
         ls -1 "${ssbt_dir}" 2>/dev/null | \
         while read _host; do
+            config::load "${_host}"
             config::get "_datediff_max" "maxage" ${_g_datediff_max}
 
             _last_backup=`ls -1r "${ssbt_dir}/${_host}" | grep -v ".sha256" | head -1 2>/dev/null`
@@ -69,7 +70,7 @@ core::status(){
 #
 #
 core::pull(){
-    local _host _filter
+    local _host _filter _type
 
     _filter="$1"
 
@@ -77,11 +78,24 @@ core::pull(){
     while read _host; do
         [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
 
-        core::_pull "${_host}"
+        config::load "${_host}"
+        config::get "_type" "type" "sftp"
+
+        case "${_type}" in
+            "sftp")
+                core::_pullsftp "${_host}"
+            ;;
+            "manual")
+                util::log "${_host}" "ignoring ${_host} because type is manual"
+            ;;
+            *)
+                util::log "${_host}" "Unknown backup type ${_type} for host ${_host}"
+            ;;
+        esac
     done
 }
 
-core::_pull(){
+core::_pullsftp(){
     local _host _staging_dir _file _remote_file _local_user _local_group
     local _user _remote_dir
     local _g_user _g_remote_dir
