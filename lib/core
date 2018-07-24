@@ -99,6 +99,7 @@ core::_pullsftp(){
     local _host _staging_dir _file _remote_file _local_user _local_group
     local _user _remote_dir
     local _g_user _g_remote_dir
+    local _sha256bin
 
     _host="$1"
 
@@ -111,6 +112,10 @@ core::_pullsftp(){
 
     config::core::get "_g_remote_dir" "remote_dir" "/data"
     config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
+
+    if [ -n `which sha256 sha256sum 2>/dev/null` ] ; then
+        _sha256bin=`which sha256 sha256sum 2>/dev/null`
+    fi
 
     rm -f ${_staging_dir}/* || util::err "unable to clean staging directory ${_staging_dir}"
 
@@ -125,9 +130,11 @@ core::_pullsftp(){
         echo "get ${_remote_file} ${_staging_dir}/" | sftp -qfb - "${_user}@${_host}" \
             || util::log "${_host}" "sftp get ${_remote_file} failed"
 
-        util::log "${_host}" "generating sha256 checksum file"
-        sha256 "${_file}" > "${_file}.sha256" \
-            || util::log "${_host}" "sha256 ${_file} failed"
+        if [ -n "${_sha256bin}" ]; then
+            util::log "${_host}" "generating sha256 checksum file"
+            ${_sha256bin} "${_file}" > "${_file}.sha256" \
+                || util::log "${_host}" "sha256 ${_file} failed"
+        fi
 
         util::log "${_host}" "moving ${_file} to ${ssbt_dir}/${_host}"
         chown ${_local_user}:${_local_group} "${_staging_dir}"/* \
@@ -136,8 +143,10 @@ core::_pullsftp(){
         mv -n "${_file}" "${ssbt_dir}/${_host}" \
             || util::log "${_host}" "Moving ${_file} to ${ssbt_dir}/${_host} failed"
 
-        mv -n "${_file}.sha256" "${ssbt_dir}/${_host}" \
-            || util::log "${_host}" "Moving ${_file}.sha256 to ${ssbt_dir}/${_host} failed"
+        if [ -n "${_sha256bin}" ]; then
+            mv -n "${_file}.sha256" "${ssbt_dir}/${_host}" \
+                || util::log "${_host}" "Moving ${_file}.sha256 to ${ssbt_dir}/${_host} failed"
+        fi
 
         util::log "${_host}" "removing ${_remote_file} on ${_host}"
         echo "rm ${_remote_file}" | sftp -qb - "${_user}@${_host}" \
