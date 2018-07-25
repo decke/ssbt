@@ -89,7 +89,8 @@ A global config file exists in `/backup/.ssbt.conf`:
     local_user="backup"
     local_group="backup"
     remote_user="backup"
-    keep_archives=3
+    keep_daily=3
+    keep_weekly=2
     maxage=86400
 
 For each host some parameters can be set individuall in `/backup/{host}/.ssbt.conf`:
@@ -97,7 +98,8 @@ For each host some parameters can be set individuall in `/backup/{host}/.ssbt.co
     type="sftp|manual"
     user="backup"
     remote_dir="/data"
-    keep_archives=3
+    keep_daily=3
+    keep_weekly=3
     maxage=86400
 
 

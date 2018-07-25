@@ -43,24 +43,38 @@ core::cron(){
 # Cleanup archive from old backups
 #
 core::clean(){
-    local _host _filter _keep _g_keep
+    local _host _filter _file _tmp _index
+    local _keepdaily _g_keepdaily _keepweekly _g_keepweekly
 
     _filter="$1"
 
-    config::core::get "_g_keep" "keep_archives" "3"
+    config::core::get "_g_keepdaily" "keep_daily" "3"
+    config::core::get "_g_keepweekly" "keep_weekly" "2"
 
     ls -1 "${ssbt_dir}" 2>/dev/null | \
     while read _host; do
         [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
 
         config::load "${_host}"
-        config::get "_keep" "keep_archives" ${_g_keep}
+        config::get "_keepdaily" "keep_daily" ${_g_keepdaily}
+        config::get "_keepweekly" "keep_weekly" ${_g_keepweekly}
 
-        _keep=`expr ${_keep} + 1`
+        _keepdaily=`expr ${_keepdaily} + 1`
 
-        for _file in `ls -1r "${ssbt_dir}/${_host}/" | grep -v ".sha256" | tail -n +${_keep} 2>/dev/null`
+        for _file in `ls -1r "${ssbt_dir}/${_host}/" | grep -v ".sha256" | tail -n +${_keepdaily} 2>/dev/null`
         do
             _file="${ssbt_dir}/${_host}/${_file}"
+
+            if [ "${_keepweekly}" -gt 0 ]; then
+                for _index in `seq 1 ${_keepweekly}`
+                do
+                    _tmp=`find "${ssbt_dir}/${_host}" -type f -mtime +${_index}w | grep -v ".sha256" | sort -r | head -n 1`
+                    if [ "${_tmp}" = "${_file}" ]; then
+                        util::log "${_host}" "Keep weekly backup ${_file}"
+                        continue 2
+                    fi
+                done
+            fi
 
             util::log "${_host}" "Removing ${_file}"
             rm "${_file}" || util::err "Unable to remove ${_file}"
