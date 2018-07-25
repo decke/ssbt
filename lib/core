@@ -43,7 +43,7 @@ core::cron(){
 # Cleanup archive from old backups
 #
 core::clean(){
-    local _host _filter _file _tmp _index
+    local _host _filter _type _file _tmp _index
     local _keepdaily _g_keepdaily _keepweekly _g_keepweekly
 
     _filter="$1"
@@ -56,10 +56,13 @@ core::clean(){
         [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
 
         config::load "${_host}"
+        config::get "_type" "type" "sftp"
         config::get "_keepdaily" "keep_daily" ${_g_keepdaily}
         config::get "_keepweekly" "keep_weekly" ${_g_keepweekly}
 
         _keepdaily=`expr ${_keepdaily} + 1`
+
+        [ "${_type}" = "manual" ] && continue
 
         for _file in `ls -1r "${ssbt_dir}/${_host}/" | grep -v ".sha256" | tail -n +${_keepdaily} 2>/dev/null`
         do
