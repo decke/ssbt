@@ -67,7 +67,7 @@ directory.
     # install -d -m 0700 -g backup -o backup /backup/data
 
     # install -m 0400 -g backup -o backup /dev/null /backup/.ssh/authorized_keys
-    # echo "...your-public-key-here..." > /backup/.ssh/autorized_keys
+    # echo "...your-public-key-here..." > /backup/.ssh/authorized_keys
 
     # printf "\nMatch User backup\n" >> /etc/ssh/sshd_config
     # printf "\tChrootDirectory %%h\n" >> /etc/ssh/sshd_config
