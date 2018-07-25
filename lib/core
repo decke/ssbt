@@ -34,8 +34,8 @@ core::cron(){
     core::pull >/dev/null
     core::clean >/dev/null
 
-    if [ `core::status "y" | tail -n +2 | wc -l` -gt 0 ]; then
-        core::status "y"
+    if [ `core::_status "" "y" | tail -n +2 | wc -l` -gt 0 ]; then
+        core::_status "" "y"
     fi
 }
 
@@ -75,15 +75,27 @@ core::clean(){
 }
 
 # 'ssbt status'
-# list hosts and their backup status
+# wrapper to list hosts and their backup status or details
+# about a single host
 #
 core::status(){
-    local _host _outdated_only _last_backup _last_date _date_diff
+    local _filter="$1" _outdated_only="$2"
+
+    if [ -n "${_filter}" ]; then
+        core::_statusdetails "${_filter}"
+    else
+        core::_status "${_outdated_only}"
+    fi
+}
+
+# lists all hosts and their backup status
+#
+core::_status(){
+    local _outdated_only="$1"
+    local _host _last_backup _last_date _date_diff
     local _format="%s^%b\n"
     local _date_format="%Y/%m/%d %H:%M"
     local _g_datediff_max _datediff_max
-
-    _outdated_only="$1"
 
     config::core::get "_g_datediff_max" "maxage" "86400"
 
@@ -117,6 +129,44 @@ core::status(){
             if [ -z "${_outdated_only}" -o ${_date_diff} -gt ${_datediff_max} ]; then
                 printf "${_format}" "${_host}" "${_last_date}"
             fi
+        done
+    } | column -ts^
+}
+
+# lists details about a single host
+#
+core::_statusdetails(){
+    local _host="$1"
+    local _type _file _filedate _timestamp _timestampf
+    local _format="%s^%s\n" _date_format="%Y/%m/%d %H:%M"
+
+    [ ! -d "${ssbt_dir}/${_filter}" ] && util::err "Host ${_filter} does not exist"
+
+    config::load "${_host}"
+    config::get "_type" "type" "sftp"
+
+    # pass everything below here to column(1)
+    {
+        printf "${_format}" "CONFIG" "VALUE"
+
+        printf "${_format}" "host" "${_host}"
+        printf "${_format}" "type" "${_type}"
+    } | column -ts^
+
+    printf "\n"
+
+    # pass everything below here to column(1)
+    {
+        printf "%s^%s^%s\n" "BACKUP FILE" "BACKUP DATE" "FILE DATE"
+
+        ls -1r "${ssbt_dir}/${_host}" | grep -v ".sha256" 2>/dev/null | \
+        while read _file; do
+            _timestamp=${_file##*-}
+            _timestamp=${_timestamp%%.*}
+            _timestampf=`date -j ${_timestamp} +"${_date_format}"`
+            _filedate=`date -j -r "${ssbt_dir}/${_host}/${_file}" +"${_date_format}"`
+
+            printf "%s^%s^%s\n" "${_file}" "${_timestampf}" "${_filedate}"
         done
     } | column -ts^
 }
