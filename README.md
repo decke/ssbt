@@ -100,3 +100,9 @@ For each host some parameters can be set individuall in `/backup/{host}/.ssbt.co
     keep_archives=3
     maxage=86400
 
+
+## License
+
+ssbt is released under the 2-clause BSD License. Parts of the code
+were copied from github.com/churchers/vm-bhyve under the 2-clause
+BSD License. Thanks a lot for this great code!
