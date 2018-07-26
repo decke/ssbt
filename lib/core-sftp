@@ -31,8 +31,7 @@
 #
 core::sftp::pull(){
     local _host _staging_dir _file _remote_file _local_user _local_group
-    local _user _remote_dir
-    local _g_user _g_remote_dir
+    local _g_remote_user _remote_user _g_remote_dir _remote_dir
     local _sha256bin
 
     _host="$1"
@@ -41,8 +40,8 @@ core::sftp::pull(){
     config::core::get "_local_user" "local_user" "backup"
     config::core::get "_local_group" "local_group" "backup"
 
-    config::core::get "_g_user" "remote_user" "backup"
-    config::get "_user" "user" ${_g_user}
+    config::core::get "_g_remote_user" "remote_user" "backup"
+    config::get "_remote_user" "remote_user" ${_g_remote_user}
 
     config::core::get "_g_remote_dir" "remote_dir" "/data"
     config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
@@ -56,12 +55,12 @@ core::sftp::pull(){
     util::log "${_host}" "checking ${_remote_dir} on ${_host}"
 
     for _remote_file in `echo "ls ${_remote_dir}" | \
-        sftp -qb - "${_user}@${_host}" | grep -v "sftp>" | grep "^${_remote_dir}" `
+        sftp -qb - "${_remote_user}@${_host}" | grep -v "sftp>" | grep "^${_remote_dir}" `
     do
         _file="${_staging_dir}/${_remote_file##*/}"
 
         util::log "${_host}" "copying ${_file} to ${_staging_dir}"
-        echo "get ${_remote_file} ${_staging_dir}/" | sftp -qfb - "${_user}@${_host}" \
+        echo "get ${_remote_file} ${_staging_dir}/" | sftp -qfb - "${_remote_user}@${_host}" \
             || util::log "${_host}" "sftp get ${_remote_file} failed"
 
         if [ -n "${_sha256bin}" ]; then
@@ -83,7 +82,7 @@ core::sftp::pull(){
         fi
 
         util::log "${_host}" "removing ${_remote_file} on ${_host}"
-        echo "rm ${_remote_file}" | sftp -qb - "${_user}@${_host}" \
+        echo "rm ${_remote_file}" | sftp -qb - "${_remote_user}@${_host}" \
             || util::log "${_host}" "sftp rm ${_remote_file} failed"
     done
 }

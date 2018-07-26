@@ -31,17 +31,18 @@
 #
 core::rsync::pull(){
     local _host="$1"
-    local _user _g_remote_dir _remote_dir _remote_url _local_url _rsync_flags
+    local _g_remote_user _remote_user _g_remote_dir _remote_dir
+    local _remote_url _local_url _rsync_flags
 
-    config::core::get "_g_user" "remote_user" "backup"
-    config::get "_user" "user" ${_g_user}
+    config::core::get "_g_remote_user" "remote_user" "backup"
+    config::get "_remote_user" "remote_user" ${_g_remote_user}
 
     config::core::get "_g_remote_dir" "remote_dir" "/data"
     config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
 
     config::get "_rsync_flags" "rsync_flags" "-av --delete"
 
-    _remote_url="${_user}@${_host}:${_remote_dir}/"
+    _remote_url="${_remote_user}@${_host}:${_remote_dir}/"
     _local_url="${ssbt_dir}/${_host}/"
 
     util::log "${_host}" "rsync from ${_remote_url} to ${_local_url}"
