@@ -111,18 +111,16 @@ core::pull(){
 #
 core::status(){
     local _outdated_only
-    local _host _type _last_backup _last_date _date_diff
-    local _format="%s^%b\n"
-    local _date_format="%Y/%m/%d %H:%M"
+    local _host _type _line _backup _timestamp _date_diff _date_str
     local _g_datediff_max _datediff_max
 
-    [ "$2" = "-i" ] && _outdated_only="y"
+    [ "$1" = "-i" ] && _outdated_only="y"
 
     config::core::get "_g_datediff_max" "maxage" "86400"
 
     # pass everything below here to column(1)
     {
-        printf "${_format}" "NAME" "LAST BACKUP"
+        printf "%s^%b\n" "NAME" "LAST BACKUP"
 
         ls -1 "${ssbt_dir}" 2>/dev/null | \
         while read _host; do
@@ -130,26 +128,26 @@ core::status(){
             config::get "_type" "type" "sftp"
             config::get "_datediff_max" "maxage" ${_g_datediff_max}
 
-            _last_backup=`ls -1r "${ssbt_dir}/${_host}" | grep -v ".sha256" | head -1 2>/dev/null`
-            if [ -n "${_last_backup}" ] ; then
-                _last_backup=${_last_backup##*-}
-                _last_backup=${_last_backup%%.*}
-                _last_date=`date -j ${_last_backup} +"${_date_format}"`
+            _line=`core::${_type}::list "${_host}" | head -n 1 2>/dev/null`
+            if [ -n "${_line}" ] ; then
+                _backup=`echo "${_line}" | cut -d^ -f1`
+                _timestamp=`echo "${_line}" | cut -d^ -f2`
 
-                _date_diff=`util::datediff "${_last_backup}"`
+                _date_diff=`util::datediff "${_timestamp}"`
+                _date_str=`date -j ${_timestamp} +"%Y/%m/%d %H:%M"`
 
                 if [ ${_date_diff} -gt ${_datediff_max} ]; then
-                    _last_date="\033[0;31m${_last_date}\033[0m"
+                    _date_str="\033[0;31m${_date_str}\033[0m"
                 else
-                    _last_date="\033[0;32m${_last_date}\033[0m"
+                    _date_str="\033[0;32m${_date_str}\033[0m"
                 fi
             else
-                _date_diff=0
-                _last_date="none"
+                _diff_diff=0
+                _date_str="none"
             fi
 
             if [ -z "${_outdated_only}" -o ${_date_diff} -gt ${_datediff_max} ]; then
-                printf "${_format}" "${_host}" "${_last_date}"
+                printf "%s^%b\n" "${_host}" "${_date_str}"
             fi
         done
     } | column -ts^
@@ -190,4 +188,3 @@ core::details(){
         done
     } | column -ts^
 }
-
