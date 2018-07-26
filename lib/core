@@ -28,14 +28,14 @@
 
 
 # 'ssbt cron'
-#
+# Command to run periodically (equivalent to pull + clean + status -i)
 #
 core::cron(){
     core::pull >/dev/null
     core::clean >/dev/null
 
-    if [ `core::_status "" "y" | tail -n +2 | wc -l` -gt 0 ]; then
-        core::_status "" "y"
+    if [ `core::status "-i" | tail -n +2 | wc -l` -gt 0 ]; then
+        core::status "-i"
     fi
 }
 
@@ -43,8 +43,9 @@ core::cron(){
 # Cleanup archive from old backups
 #
 core::clean(){
-    local _host _filter _type _file _tmp _index
+    local _host _filter _type _backup _timestamp _datediff
     local _keepdaily _g_keepdaily _keepweekly _g_keepweekly
+    local _limitdaily _limitweekly
 
     _filter="$1"
 
@@ -60,59 +61,62 @@ core::clean(){
         config::get "_keepdaily" "keep_daily" ${_g_keepdaily}
         config::get "_keepweekly" "keep_weekly" ${_g_keepweekly}
 
-        _keepdaily=`expr ${_keepdaily} + 1`
+        core::${_type}::list "${_host}" | \
+        while read _line; do
+            _backup=`echo "${_line}" | cut -d^ -f1`
+            _timestamp=`echo "${_line}" | cut -d^ -f2`
 
-        [ "${_type}" = "manual" ] && continue
+            _datediff=`util::datediff "${_timestamp}"`
+            _limitdaily=`expr 86400 '*' '(' ${_keepdaily} + 1 ')'`
+            _limitweekly=`expr 604800 '*' '(' ${_keepweekly} + 1 ')'`
 
-        for _file in `ls -1r "${ssbt_dir}/${_host}/" | grep -v ".sha256" | tail -n +${_keepdaily} 2>/dev/null`
-        do
-            _file="${ssbt_dir}/${_host}/${_file}"
-
-            if [ "${_keepweekly}" -gt 0 ]; then
-                for _index in `seq 1 ${_keepweekly}`
-                do
-                    _tmp=`find "${ssbt_dir}/${_host}" -type f -mtime +${_index}w | grep -v ".sha256" | sort -r | head -n 1`
-                    if [ "${_tmp}" = "${_file}" ]; then
-                        util::log "${_host}" "Keep weekly backup ${_file}"
-                        continue 2
-                    fi
-                done
+            if [ "${_datediff}" -lt "${_limitdaily}" ]; then
+                util::log "${_host}" "Keep daily backup ${_backup}"
+                continue
             fi
 
-            util::log "${_host}" "Removing ${_file}"
-            rm "${_file}" || util::err "Unable to remove ${_file}"
-
-            if [ -f "${_file}.sha256" ]; then
-                _file="${_file}.sha256"
-                util::log "${_host}" "Removing ${_file}"
-                rm "${_file}" || util::err "Unable to remove ${_file}"
+            if [ ${_datediff} -gt 604800 -a ${_datediff} -lt ${_limitweekly} ]; then
+                util::log "${_host}" "Keep weekly backup ${_backup}"
+                continue
             fi
+
+            util::log "${_host}" "Removing ${_backup} from ${_host}"
+            core::${_type}::remove "${_host}" "${_backup}" || \
+                util::err "Unable to remove ${_backup}"
         done
     done
 }
 
-# 'ssbt status'
-# wrapper to list hosts and their backup status or details
-# about a single host
+# 'ssbt pull'
+# Pull backups from a remote host
 #
-core::status(){
-    local _filter="$1" _outdated_only="$2"
+core::pull(){
+    local _host _filter _type
 
-    if [ -n "${_filter}" ]; then
-        core::_statusdetails "${_filter}"
-    else
-        core::_status "${_outdated_only}"
-    fi
+    _filter="$1"
+
+    ls -1 "${ssbt_dir}" 2>/dev/null | \
+    while read _host; do
+        [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
+
+        config::load "${_host}"
+        config::get "_type" "type" "sftp"
+
+        core::${_type}::pull "${_host}"
+    done
 }
 
-# lists all hosts and their backup status
+# 'ssbt status'
+# Lists all hosta and their backup status
 #
-core::_status(){
-    local _outdated_only="$1"
-    local _host _last_backup _last_date _date_diff
+core::status(){
+    local _outdated_only
+    local _host _type _last_backup _last_date _date_diff
     local _format="%s^%b\n"
     local _date_format="%Y/%m/%d %H:%M"
     local _g_datediff_max _datediff_max
+
+    [ "$2" = "-i" ] && _outdated_only="y"
 
     config::core::get "_g_datediff_max" "maxage" "86400"
 
@@ -123,6 +127,7 @@ core::_status(){
         ls -1 "${ssbt_dir}" 2>/dev/null | \
         while read _host; do
             config::load "${_host}"
+            config::get "_type" "type" "sftp"
             config::get "_datediff_max" "maxage" ${_g_datediff_max}
 
             _last_backup=`ls -1r "${ssbt_dir}/${_host}" | grep -v ".sha256" | head -1 2>/dev/null`
@@ -152,126 +157,37 @@ core::_status(){
 
 # lists details about a single host
 #
-core::_statusdetails(){
-    local _host="$1"
-    local _type _file _filedate _timestamp _timestampf
-    local _format="%s^%s\n" _date_format="%Y/%m/%d %H:%M"
+core::details(){
+    local _host="$1" _type
+    local _line _backup _timestamp
 
-    [ ! -d "${ssbt_dir}/${_filter}" ] && util::err "Host ${_filter} does not exist"
+    [ -z "${_host}" ] && util::err "Parameter host needs to be set"
+    [ ! -d "${ssbt_dir}/${_host}" ] && util::err "Host ${_host} does not exist"
 
     config::load "${_host}"
     config::get "_type" "type" "sftp"
 
     # pass everything below here to column(1)
     {
-        printf "${_format}" "CONFIG" "VALUE"
+        printf "%s^%s\n" "CONFIG" "VALUE"
 
-        printf "${_format}" "host" "${_host}"
-        printf "${_format}" "type" "${_type}"
+        printf "%s^%s\n" "host" "${_host}"
+        printf "%s^%s\n" "type" "${_type}"
     } | column -ts^
 
     printf "\n"
 
     # pass everything below here to column(1)
     {
-        printf "%s^%s^%s\n" "BACKUP FILE" "BACKUP DATE" "FILE DATE"
+        printf "%s^%s\n" "BACKUP" "BACKUP DATE"
 
-        ls -1r "${ssbt_dir}/${_host}" | grep -v ".sha256" 2>/dev/null | \
-        while read _file; do
-            _timestamp=${_file##*-}
-            _timestamp=${_timestamp%%.*}
-            _timestampf=`date -j ${_timestamp} +"${_date_format}"`
-            _filedate=`date -j -r "${ssbt_dir}/${_host}/${_file}" +"${_date_format}"`
+        core::${_type}::list "${_host}" | \
+        while read _line; do
+            _backup=`echo "${_line}" | cut -d^ -f1`
+            _timestamp=`echo "${_line}" | cut -d^ -f2`
 
-            printf "%s^%s^%s\n" "${_file}" "${_timestampf}" "${_filedate}"
+            printf "%s^%s\n" "${_backup}" "`date -j ${_timestamp} +"%Y/%m/%d %H:%M"`"
         done
     } | column -ts^
 }
 
-## 'ssbt pull'
-#
-#
-core::pull(){
-    local _host _filter _type
-
-    _filter="$1"
-
-    ls -1 "${ssbt_dir}" 2>/dev/null | \
-    while read _host; do
-        [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
-
-        config::load "${_host}"
-        config::get "_type" "type" "sftp"
-
-        case "${_type}" in
-            "sftp")
-                core::_pullsftp "${_host}"
-            ;;
-            "manual")
-                util::log "${_host}" "ignoring ${_host} because type is manual"
-            ;;
-            *)
-                util::log "${_host}" "Unknown backup type ${_type} for host ${_host}"
-            ;;
-        esac
-    done
-}
-
-core::_pullsftp(){
-    local _host _staging_dir _file _remote_file _local_user _local_group
-    local _user _remote_dir
-    local _g_user _g_remote_dir
-    local _sha256bin
-
-    _host="$1"
-
-    config::core::get "_staging_dir" "staging_dir" "/home/backup/staging"
-    config::core::get "_local_user" "local_user" "backup"
-    config::core::get "_local_group" "local_group" "backup"
-
-    config::core::get "_g_user" "remote_user" "backup"
-    config::get "_user" "user" ${_g_user}
-
-    config::core::get "_g_remote_dir" "remote_dir" "/data"
-    config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
-
-    if [ -n `which sha256 sha256sum 2>/dev/null` ] ; then
-        _sha256bin=`which sha256 sha256sum 2>/dev/null`
-    fi
-
-    rm -f ${_staging_dir}/* || util::err "unable to clean staging directory ${_staging_dir}"
-
-    util::log "${_host}" "checking ${_remote_dir} on ${_host}"
-
-    for _remote_file in `echo "ls ${_remote_dir}" | \
-        sftp -qb - "${_user}@${_host}" | grep -v "sftp>" | grep "^${_remote_dir}" `
-    do
-        _file="${_staging_dir}/${_remote_file##*/}"
-
-        util::log "${_host}" "copying ${_file} to ${_staging_dir}"
-        echo "get ${_remote_file} ${_staging_dir}/" | sftp -qfb - "${_user}@${_host}" \
-            || util::log "${_host}" "sftp get ${_remote_file} failed"
-
-        if [ -n "${_sha256bin}" ]; then
-            util::log "${_host}" "generating sha256 checksum file"
-            ${_sha256bin} "${_file}" > "${_file}.sha256" \
-                || util::log "${_host}" "sha256 ${_file} failed"
-        fi
-
-        util::log "${_host}" "moving ${_file} to ${ssbt_dir}/${_host}"
-        chown ${_local_user}:${_local_group} "${_staging_dir}"/* \
-            || util::log "${_host}" "chown ${_local_user}:${local_group} failed on ${_staging_dir}"
-
-        mv -n "${_file}" "${ssbt_dir}/${_host}" \
-            || util::log "${_host}" "Moving ${_file} to ${ssbt_dir}/${_host} failed"
-
-        if [ -n "${_sha256bin}" ]; then
-            mv -n "${_file}.sha256" "${ssbt_dir}/${_host}" \
-                || util::log "${_host}" "Moving ${_file}.sha256 to ${ssbt_dir}/${_host} failed"
-        fi
-
-        util::log "${_host}" "removing ${_remote_file} on ${_host}"
-        echo "rm ${_remote_file}" | sftp -qb - "${_user}@${_host}" \
-            || util::log "${_host}" "sftp rm ${_remote_file} failed"
-    done
-}

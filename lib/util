@@ -40,8 +40,9 @@ util::usage(){
 Usage: ssbt ...
     clean <host>
     cron
+    details <host>
     pull <host>
-    status <host>
+    status [-i]
     usage
     version
 EOT

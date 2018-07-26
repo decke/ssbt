@@ -26,23 +26,21 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# get libs
-if [ -e "${0%/*}/lib" ]; then
-   LIB="${0%/*}/lib"
-elif [ -e "/usr/local/lib/ssbt" ]; then
-   LIB="/usr/local/lib/ssbt"
-else
-   echo "unable to locate ssbt libraries"
-   exit 1
-fi
 
-# load libs
+# Transfer files from a remote location
+#
+core::manual::pull(){
+    local _host="$1"
+}
 
-. "${LIB}/core"
-. "${LIB}/core-manual"
-. "${LIB}/core-sftp"
-. "${LIB}/cmd"
-. "${LIB}/config"
-. "${LIB}/util"
+# List backups for a host
+#
+core::manual::list(){
+    local _host="$1"
+}
 
-. "${LIB}/base"
+# Remove backup from archive
+#
+core::manual::remove(){
+    local _host="$1" _backup="$2"
+}
