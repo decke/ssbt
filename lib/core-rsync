@@ -26,24 +26,51 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# get libs
-if [ -e "${0%/*}/lib" ]; then
-   LIB="${0%/*}/lib"
-elif [ -e "/usr/local/lib/ssbt" ]; then
-   LIB="/usr/local/lib/ssbt"
-else
-   echo "unable to locate ssbt libraries"
-   exit 1
-fi
 
-# load libs
+# Transfer files from a remote location via rsync over ssh
+#
+core::rsync::pull(){
+    local _host="$1"
+    local _user _g_remote_dir _remote_dir _remote_url _local_url _rsync_flags
 
-. "${LIB}/core"
-. "${LIB}/core-manual"
-. "${LIB}/core-rsync"
-. "${LIB}/core-sftp"
-. "${LIB}/cmd"
-. "${LIB}/config"
-. "${LIB}/util"
+    config::core::get "_g_user" "remote_user" "backup"
+    config::get "_user" "user" ${_g_user}
 
-. "${LIB}/base"
+    config::core::get "_g_remote_dir" "remote_dir" "/data"
+    config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
+
+    config::get "_rsync_flags" "rsync_flags" "-av --delete"
+
+    _remote_url="${_user}@${_host}:${_remote_dir}/"
+    _local_url="${ssbt_dir}/${_host}/"
+
+    util::log "${_host}" "rsync from ${_remote_url} to ${_local_url}"
+
+    rsync ${_rsync_flags} --exclude .ssbt.conf --exclude .ssbt.log \
+        -e ssh "${_remote_url}" "${_local_url}" \
+        || util::log "${_host}" "rsync failed to ${_host}"
+
+    touch ${ssbt_dir}/${_host}/.ssbt-lastsync
+}
+
+# List local backups (youngest first)
+#
+core::rsync::list(){
+    local _host="$1" _backup _timestamp _file
+    local _g_remote_dir _remote_dir
+
+    _file="${ssbt_dir}/${_host}/.ssbt-lastsync"
+
+    [ ! -f "${_file}" ] && return
+
+    config::core::get "_g_remote_dir" "remote_dir" "/data"
+    config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
+
+    printf "%s^%s\n" "${_remote_dir}" "`date -j -r "${_file}" +"%Y%m%d%H%M"`"
+}
+
+# Remove backup
+#
+core::rsync::remove(){
+    local _host="$1" _backup="$2"
+}

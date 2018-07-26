@@ -95,12 +95,13 @@ A global config file exists in `/backup/.ssbt.conf`:
 
 For each host some parameters can be set individuall in `/backup/{host}/.ssbt.conf`:
 
-    type="sftp|manual"
+    type="sftp|manual|rsync"
     user="backup"
     remote_dir="/data"
     keep_daily=3
     keep_weekly=3
     maxage=86400
+    rsync_flags="-av --delete"
 
 
 ## License
