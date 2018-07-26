@@ -33,7 +33,7 @@ core::manual::pull(){
     local _host="$1"
 }
 
-# List backups for a host
+# List backups for a host (youngest first)
 #
 core::manual::list(){
     local _host="$1"

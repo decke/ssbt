@@ -88,7 +88,7 @@ core::sftp::pull(){
     done
 }
 
-# List local backed up files
+# List local backed up files (youngest first)
 #
 core::sftp::list(){
     local _host _file _timestamp
