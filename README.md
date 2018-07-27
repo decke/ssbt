@@ -69,6 +69,13 @@ properly this will generate an email for you.
 
     # ssbt cron
 
+#### `init(8)` startscript
+
+In case you want to run an automatic `ssbt pull` on machine startup you need
+to enable it:
+
+    # sysrc ssbt_enable="YES"
+
 #### ZFS
 
 If you are using ZFS and have bigger amounts of slowly changing data then
