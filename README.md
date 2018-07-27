@@ -3,10 +3,12 @@
 You create a backup on your machine and ssbt will periodically
 collect and archive it.
 
-* Simple (no database, just filesystem and a config)
-* Secure (using chrooted sftp)
-* Archive old backups
-* First class FreeBSD support
+* Simple setup and maintenance
+* Automatic cleanup of old backups
+* sftp support (including chrooted sftp)
+* rsync support over ssh
+* zfs snapshot support
+* 1st class FreeBSD support (Linux support planned)
 
 
 ## But why yet another backup solution?
@@ -17,13 +19,67 @@ agents for whatever service you might run, multiuser, cross platform and much
 more. You will not find any of those features here.
 
 What you will find is a simple shellscript which will periodically log into
-your machines with sftp(1) and pull tar archives from there which get archived.
+your machines with ssh(1) and pull tar archives from there which get archived.
 
 You can continue to create your backups with tar(1) and be sure those are
 archived on your backup master.
 
 
 ## Quick-Start
+
+### Backup Master
+
+Either download the release tarball and run `make install` or clone the git
+repository and run `make install`.
+
+    # git clone https://code.bluelife.at/decke/ssbt.git
+    # make install
+
+The only mandatory setup is to set the backup directory for ssbt and make
+sure that it exists. If you want to run ssbt as non root (which is recommended!)
+then make sure the directory has proper owner/group and permissions.
+
+    # sysrc ssbt_dir="/backup"
+    # mkdir /backup
+
+    # adduser backup
+    # sysrc ssbt_user="backup"
+    # chown backup:backup /backup
+
+It is recommended to use SSH certificates instead of passwords and create a
+dedicated ssh key that you can copy to all clients for fetching backups.
+
+    # ssh-keygen
+
+You are good to go now.
+In this example we now add our first client `first.example.com`.
+
+    # mkdir /backup/first.example.com
+
+If ssh(1) setup was done properly a `pull` will transfer the backups.
+
+    # ssbt pull first.example.com
+
+#### Cronjob
+
+To automate periodic pulls add this command to your crontab(5):
+
+    # ssbt cron
+
+#### ZFS
+
+If you are using ZFS and have bigger amounts of slowly changing data then
+the type rsync+zfs will be relevant for you. It allows to transfer changed
+data with rsync and use ZFS snapshots for keeping multiple backups of that
+data.
+
+    # zfs create zroot/backup/second.example.com
+
+If you run ssbt with non root user it will need permissions to run `zfs snapshot`
+and `zfs destroy` on that filesystem (mount is a requirement of destroy).
+
+    # zfs allow -u backup snapshot,mount,destroy zroot/backup/second.example.com
+
 
 ### Client
 
@@ -75,9 +131,6 @@ directory.
     # printf "\tX11Forwarding no" >> /etc/ssh/sshd_config
 
     # /etc/rc.d/sshd reload
-
-
-### Backup master
 
 
 ## Configuration
