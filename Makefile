@@ -16,7 +16,7 @@ MAN=$(PROG).8
 
 install:
 	$(MKDIR) -p $(BINDIR)
-	$(INSTALL) -m 544 $(PROG) $(BINDIR)/
+	$(INSTALL) -m 555 $(PROG) $(BINDIR)/
 
 	$(MKDIR) -p $(LIBDIR)
 	$(INSTALL) lib/* $(LIBDIR)/
