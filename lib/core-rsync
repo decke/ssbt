@@ -43,7 +43,7 @@ core::rsync::pull(){
     util::log "${_host}" "rsync from ${_remote_url} to ${_local_url}"
 
     rsync ${_rsync_flags} --exclude .ssbt.conf --exclude .ssbt.log \
-        -e ssh "${_remote_url}" "${_local_url}" \
+        -e "ssh -q" "${_remote_url}" "${_local_url}" \
         || util::log "${_host}" "rsync failed to ${_host}"
 
     touch ${ssbt_dir}/${_host}/.ssbt-lastsync
