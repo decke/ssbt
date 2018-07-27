@@ -82,27 +82,21 @@ directory.
 
 ## Configuration
 
-A global config file exists in `/backup/.ssbt.conf`:
+A global config file exists in `/backup/.ssbt.conf` and all parameters can be
+overwritten in a host configuration in `/backup/{host}/.ssbt.conf`:
 
+    type="sftp|manual|rsync|rsync+zfs"
     staging_dir="/home/backup/staging"
+    remote_user="backup"
     remote_dir="/data"
     local_user="backup"
     local_group="backup"
-    remote_user="backup"
     keep_daily=3
     keep_weekly=2
     maxage=86400
-
-For each host some parameters can be set individuall in `/backup/{host}/.ssbt.conf`:
-
-    type="sftp|manual|rsync|rsync+zfs"
-    remote_user="backup"
-    remote_dir="/data"
-    keep_daily=3
-    keep_weekly=3
-    maxage=86400
     rsync_flags="-av --delete"
-
+    prepull_cmd=""
+    postpull_cmd=""
 
 ## License
 

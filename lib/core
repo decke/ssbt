@@ -91,7 +91,7 @@ core::clean(){
 # Pull backups from a remote host
 #
 core::pull(){
-    local _host _filter _type
+    local _host _filter _type _precmd _postcmd
 
     _filter="$1"
 
@@ -101,8 +101,14 @@ core::pull(){
 
         config::load "${_host}"
         config::get "_type" "type" "sftp"
+        config::get "_precmd" "prepull_cmd" ""
+        config::get "_postcmd" "postpull_cmd" ""
+
+        [ -n "${_precmd}" ] && ${_precmd}
 
         core::${_type}::pull "${_host}"
+
+        [ -n "${_postcmd}" ] && ${_postcmd}
     done
 }
 
