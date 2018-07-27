@@ -135,6 +135,30 @@ directory.
 
     # /etc/rc.d/sshd reload
 
+#### Creating a backup
+
+Feel free to use whatever backup script you want. The only requirement is
+that the filename needs to contain the date and time in the following format
+directly before the filename extension.
+
+    # date "+%Y%m%d%H%M"
+
+So here is a backup script as an example:
+
+    # #!/bin/sh
+    #
+    # FILE=/backup/data/`uname -n`-backup-`date "+%Y%m%d%H%M"`.tar.xz
+    #
+    # touch ${FILE} && chmod 0600 ${FILE} && chown backup:backup ${FILE} && \
+    # cd / && tar -cJf ${FILE} \
+    #    boot/loader.conf \
+    #    etc \
+    #    root \
+    #    usr/local/etc \
+    #    var/cron || exit 1
+    #
+    # exit 0
+
 
 ## Configuration
 
