@@ -101,6 +101,11 @@ core::sftp::list(){
 core::sftp::remove(){
     local _host="$1" _file="$2"
 
+    [ -f "${ssbt_dir}/${_host}/${_file}" ] \
+        || util::log "${_host}" "Remove ${_file} failed because does not exist"
+
+    _file="${ssbt_dir}/${_host}/${_file}"
+
     rm "${_file}"
 
     if [ -f "${_file}.sha256" ]; then
