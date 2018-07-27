@@ -19,9 +19,9 @@ agents for whatever service you might run, multiuser, cross platform and much
 more. You will not find any of those features here.
 
 What you will find is a simple shellscript which will periodically log into
-your machines with ssh(1) and pull tar archives from there which get archived.
+your machines with `ssh(1)` and pull tar archives from there which get archived.
 
-You can continue to create your backups with tar(1) and be sure those are
+You can continue to create your backups with `tar(1)` and be sure those are
 archived on your backup master.
 
 
@@ -56,13 +56,16 @@ In this example we now add our first client `first.example.com`.
 
     # mkdir /backup/first.example.com
 
-If ssh(1) setup was done properly a `pull` will transfer the backups.
+If `ssh(1)` setup was done properly a `ssbt pull` will transfer the backups.
 
     # ssbt pull first.example.com
 
 #### Cronjob
 
-To automate periodic pulls add this command to your crontab(5):
+To automate periodic pulls add this command to your `crontab(5)`. It will
+be the same as `pull` + `clean` + `status` and will only create output if an
+error occurs or no recent backup for a host exists. If `cron(8)` is configured
+properly this will generate an email for you.
 
     # ssbt cron
 
