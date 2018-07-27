@@ -86,6 +86,7 @@ A global config file exists in `/backup/.ssbt.conf` and all parameters can be
 overwritten in a host configuration in `/backup/{host}/.ssbt.conf`:
 
     type="sftp|manual|rsync|rsync+zfs"
+    frequ=86400
     staging_dir="/home/backup/staging"
     remote_user="backup"
     remote_dir="/data"
@@ -93,7 +94,6 @@ overwritten in a host configuration in `/backup/{host}/.ssbt.conf`:
     local_group="backup"
     keep_daily=3
     keep_weekly=2
-    maxage=86400
     rsync_flags="-av --delete"
     prepull_cmd=""
     postpull_cmd=""

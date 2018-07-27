@@ -126,7 +126,7 @@ core::status(){
         while read _host; do
             config::load "${_host}"
             config::get "_type" "type" "sftp"
-            config::get "_datediff_max" "maxage" "86400"
+            config::get "_datediff_max" "frequ" "86400"
 
             _line=`core::${_type}::list "${_host}" | head -n 1 2>/dev/null`
             if [ -n "${_line}" ] ; then
@@ -156,7 +156,8 @@ core::status(){
 # lists details about a single host
 #
 core::details(){
-    local _host="$1" _type
+    local _host="$1" _type _frequ _remote_user _remote_dir _local_user _local_group
+    local _keep_daily _keep_weekly _rsync_flags _prepull_cmd _postpull_cmd
     local _line _backup _timestamp
 
     [ -z "${_host}" ] && util::err "Parameter host needs to be set"
@@ -164,6 +165,18 @@ core::details(){
 
     config::load "${_host}"
     config::get "_type" "type" "sftp"
+    config::get "_frequ" "frequ" "86400"
+    config::get "_staging_dir" "staging_dir" "/home/backup/staging"
+    config::get "_remote_user" "remote_user" "backup"
+    config::get "_remote_dir" "remote_dir" "/data"
+    config::get "_local_user" "local_user" "backup"
+    config::get "_local_group" "local_group" "backup"
+    config::get "_keep_daily" "keep_daily" "3"
+    config::get "_keep_weekly" "keep_weekly" "2"
+    config::get "_frequ" "frequ" "86400"
+    config::get "_rsync_flags" "rsync_flags" "-av --delete"
+    config::get "_prepull_cmd" "prepull_cmd" ""
+    config::get "_postpull_cmd" "postpull_cmd" ""
 
     # pass everything below here to column(1)
     {
@@ -171,6 +184,22 @@ core::details(){
 
         printf "%s^%s\n" "host" "${_host}"
         printf "%s^%s\n" "type" "${_type}"
+        printf "%s^%s\n" "frequ" "${_frequ}"
+
+        printf "%s^%s\n" "remote_user" "${_remote_user}"
+        printf "%s^%s\n" "remote_dir" "${_remote_dir}"
+
+        [ "${_type}" = "sftp" ] && printf "%s^%s\n" "staging_dir" "${_staging_dir}"
+        [ "${_type}" = "sftp" ] && printf "%s^%s\n" "local_user" "${_local_user}"
+        [ "${_type}" = "sftp" ] && printf "%s^%s\n" "local_group" "${_local_group}"
+
+        [ "${_type}" != "manual" -a "${_type}" != "rsync" ] && printf "%s^%s\n" "keep_daily" "${_keep_daily}"
+        [ "${_type}" != "manual" -a "${_type}" != "rsync" ] && printf "%s^%s\n" "keep_weekly" "${_keep_weekly}"
+
+        [ "${_type}" = "rsync" -o "${_type}" = "rsync+zfs" ] && printf "%s^%s\n" "rsync_flags" "${_rsync_flags}"
+
+        [ -n "${_prepull_cmd}" ] && printf "%s^%s\n" "prepull_cmd" "${_prepull_cmd}"
+        [ -n "${_postpull_cmd}" ] && printf "%s^%s\n" "postpull_cmd" "${_postpull_cmd}"
     } | column -ts^
 
     printf "\n"
