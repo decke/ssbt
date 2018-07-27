@@ -30,21 +30,16 @@
 # Transfer files from a remote location via sftp
 #
 core::sftp::pull(){
-    local _host _staging_dir _file _remote_file _local_user _local_group
-    local _g_remote_user _remote_user _g_remote_dir _remote_dir
-    local _sha256bin
+    local _host _file _remote_file _staging_dir _local_user _local_group
+    local _remote_user _remote_dir _sha256bin
 
     _host="$1"
 
-    config::core::get "_staging_dir" "staging_dir" "/home/backup/staging"
-    config::core::get "_local_user" "local_user" "backup"
-    config::core::get "_local_group" "local_group" "backup"
-
-    config::core::get "_g_remote_user" "remote_user" "backup"
-    config::get "_remote_user" "remote_user" ${_g_remote_user}
-
-    config::core::get "_g_remote_dir" "remote_dir" "/data"
-    config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
+    config::get "_staging_dir" "staging_dir" "/home/backup/staging"
+    config::get "_local_user" "local_user" "backup"
+    config::get "_local_group" "local_group" "backup"
+    config::get "_remote_user" "remote_user" "backup"
+    config::get "_remote_dir" "remote_dir" "/data"
 
     if [ -n `which sha256 sha256sum 2>/dev/null` ] ; then
         _sha256bin=`which sha256 sha256sum 2>/dev/null`
@@ -71,7 +66,7 @@ core::sftp::pull(){
 
         util::log "${_host}" "moving ${_file} to ${ssbt_dir}/${_host}"
         chown ${_local_user}:${_local_group} "${_staging_dir}"/* \
-            || util::log "${_host}" "chown ${_local_user}:${local_group} failed on ${_staging_dir}"
+            || util::log "${_host}" "chown ${_local_user}:${_local_group} failed on ${_staging_dir}"
 
         mv -n "${_file}" "${ssbt_dir}/${_host}" \
             || util::log "${_host}" "Moving ${_file} to ${ssbt_dir}/${_host} failed"

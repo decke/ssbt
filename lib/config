@@ -65,9 +65,8 @@ config::get(){
         fi
     done
 
-    # not found
-    setvar "${_c_var}" "${_c_def}"
-    return 1
+    # not found; fallback to global config
+    config::core::get "${_c_var}" "${_c_key}" "${_c_def}"
 }
 
 # load core configuration file

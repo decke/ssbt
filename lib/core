@@ -44,13 +44,9 @@ core::cron(){
 #
 core::clean(){
     local _host _filter _type _backup _timestamp _datediff
-    local _keepdaily _g_keepdaily _keepweekly _g_keepweekly
-    local _limitdaily _limitweekly
+    local _keepdaily _keepweekly _limitdaily _limitweekly
 
     _filter="$1"
-
-    config::core::get "_g_keepdaily" "keep_daily" "3"
-    config::core::get "_g_keepweekly" "keep_weekly" "2"
 
     ls -1 "${ssbt_dir}" 2>/dev/null | \
     while read _host; do
@@ -58,8 +54,8 @@ core::clean(){
 
         config::load "${_host}"
         config::get "_type" "type" "sftp"
-        config::get "_keepdaily" "keep_daily" ${_g_keepdaily}
-        config::get "_keepweekly" "keep_weekly" ${_g_keepweekly}
+        config::get "_keepdaily" "keep_daily" "3"
+        config::get "_keepweekly" "keep_weekly" "2"
 
         core::${_type}::list "${_host}" | \
         while read _line; do
@@ -118,11 +114,9 @@ core::pull(){
 core::status(){
     local _outdated_only
     local _host _type _line _backup _timestamp _date_diff _date_str
-    local _g_datediff_max _datediff_max
+    local _datediff_max
 
     [ "$1" = "-i" ] && _outdated_only="y"
-
-    config::core::get "_g_datediff_max" "maxage" "86400"
 
     # pass everything below here to column(1)
     {
@@ -132,7 +126,7 @@ core::status(){
         while read _host; do
             config::load "${_host}"
             config::get "_type" "type" "sftp"
-            config::get "_datediff_max" "maxage" ${_g_datediff_max}
+            config::get "_datediff_max" "maxage" "86400"
 
             _line=`core::${_type}::list "${_host}" | head -n 1 2>/dev/null`
             if [ -n "${_line}" ] ; then

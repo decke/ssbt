@@ -42,15 +42,10 @@ core::rsync+zfs::getfs(){
 #
 core::rsync+zfs::pull(){
     local _host="$1" _filesystem _snapshot
-    local _g_remote_user _remote_user _g_remote_dir _remote_dir
-    local _remote_url _local_url _rsync_flags
+    local _remote_user _remote_dir _remote_url _local_url _rsync_flags
 
-    config::core::get "_g_remote_user" "remote_user" "backup"
-    config::get "_remote_user" "remote_user" ${_g_remote_user}
-
-    config::core::get "_g_remote_dir" "remote_dir" "/data"
-    config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
-
+    config::get "_remote_user" "remote_user" "backup"
+    config::get "_remote_dir" "remote_dir" "/data"
     config::get "_rsync_flags" "rsync_flags" "-av --delete"
 
     _filesystem=`core::rsync+zfs::getfs "${_host}"`
