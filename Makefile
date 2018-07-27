@@ -5,7 +5,6 @@
 PREFIX?=/usr/local
 BINDIR=$(DESTDIR)$(PREFIX)/sbin
 LIBDIR=$(DESTDIR)$(PREFIX)/lib/ssbt
-MANDIR=$(DESTDIR)$(PREFIX)/man/man8
 RCDIR=$(DESTDIR)$(PREFIX)/etc/rc.d
 
 CP=/bin/cp
@@ -24,11 +23,6 @@ install:
 
 	$(MKDIR) -p $(RCDIR)
 	$(INSTALL) -m 555 rc.d/* $(RCDIR)/
-
-	$(MKDIR) -p $(MANDIR)
-	gzip -fk $(MAN)
-	$(INSTALL) $(MAN).gz $(MANDIR)/
-	rm -f -- $(MAN).gz
 
 .MAIN: clean
 clean: ;
