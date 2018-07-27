@@ -145,19 +145,19 @@ directly before the filename extension.
 
 So here is a backup script as an example:
 
-    # #!/bin/sh
-    #
-    # FILE=/backup/data/`uname -n`-backup-`date "+%Y%m%d%H%M"`.tar.xz
-    #
-    # touch ${FILE} && chmod 0600 ${FILE} && chown backup:backup ${FILE} && \
-    # cd / && tar -cJf ${FILE} \
-    #    boot/loader.conf \
-    #    etc \
-    #    root \
-    #    usr/local/etc \
-    #    var/cron || exit 1
-    #
-    # exit 0
+    #!/bin/sh
+    
+    FILE=/backup/data/`uname -n`-backup-`date "+%Y%m%d%H%M"`.tar.xz
+    
+    touch ${FILE} && chmod 0600 ${FILE} && chown backup:backup ${FILE} && \
+    cd / && tar -cJf ${FILE} \
+        boot/loader.conf \
+        etc \
+        root \
+        usr/local/etc \
+        var/cron || exit 1
+    
+    exit 0
 
 
 ## Configuration
