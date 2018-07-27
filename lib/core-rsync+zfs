@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# Copyright 2018 Bernhard Froehlich <decke@bluelife.at>
+# All rights reserved
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+# HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+# TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+# Get ZFS filesystem for mountpoint
+#
+core::rsync+zfs::getfs(){
+    local _host="$1" _mountpoint
+
+    _mountpoint="${ssbt_dir}/${_host}"
+
+    zfs list -Hp -t filesystem -o name "${_mountpoint}" \
+        || util::err "ZFS Filesystem for ${_mountpoint} not found!"
+}
+
+# Transfer files from a remote location via rsync over ssh
+#
+core::rsync+zfs::pull(){
+    local _host="$1" _filesystem _snapshot
+    local _g_remote_user _remote_user _g_remote_dir _remote_dir
+    local _remote_url _local_url _rsync_flags
+
+    config::core::get "_g_remote_user" "remote_user" "backup"
+    config::get "_remote_user" "remote_user" ${_g_remote_user}
+
+    config::core::get "_g_remote_dir" "remote_dir" "/data"
+    config::get "_remote_dir" "remote_dir" ${_g_remote_dir}
+
+    config::get "_rsync_flags" "rsync_flags" "-av --delete"
+
+    _filesystem=`core::rsync+zfs::getfs "${_host}"`
+    _snapshot=`date "+%Y%m%d%H%M"`
+    _remote_url="${_remote_user}@${_host}:${_remote_dir}/"
+    _local_url="${ssbt_dir}/${_host}/"
+
+    util::log "${_host}" "rsync from ${_remote_url} to ${_local_url}"
+
+    rsync ${_rsync_flags} --exclude .ssbt.conf --exclude .ssbt.log \
+        -e ssh "${_remote_url}" "${_local_url}" \
+        || util::log "${_host}" "rsync failed to ${_host}"
+
+    zfs snapshot "${_filesystem}@${_snapshot}"
+}
+
+# List local backups (youngest first)
+#
+core::rsync+zfs::list(){
+    local _host="$1" _filesystem _snapshot _timestamp
+
+    _filesystem=`core::rsync+zfs::getfs "${_host}"`
+
+    zfs list -Hp -t snapshot -o name -r "${_filesystem}" | \
+    while read _snapshot; do
+        _timestamp="${_snapshot##*@}"
+
+        printf "%s^%s\n" "${_snapshot}" "${_timestamp}"
+    done
+}
+
+# Remove backup
+#
+core::rsync+zfs::remove(){
+    local _host="$1" _backup="$2"
+
+    zfs destroy "${_backup}" \
+        || util::log "${_host}" "Removing ZFS snapshot ${_backup} failed"
+}
