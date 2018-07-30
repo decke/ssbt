@@ -69,7 +69,7 @@ core::rsync+zfs::list(){
 
     _filesystem=`core::rsync+zfs::getfs "${_host}"`
 
-    zfs list -Hp -t snapshot -o name -r "${_filesystem}" | \
+    zfs list -Hp -t snapshot -o name -r "${_filesystem}" | sort -r | \
     while read _snapshot; do
         _timestamp="${_snapshot##*@}"
 
