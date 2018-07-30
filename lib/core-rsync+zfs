@@ -49,7 +49,7 @@ core::rsync+zfs::pull(){
     config::get "_rsync_flags" "rsync_flags" "-av --delete"
 
     _filesystem=`core::rsync+zfs::getfs "${_host}"`
-    _snapshot=`date "+%Y%m%d%H%M"`
+    _snapshot=`date "+%Y%m%d%H%M.%S"`
     _remote_url="${_remote_user}@${_host}:${_remote_dir}/"
     _local_url="${ssbt_dir}/${_host}/"
 
