@@ -17,6 +17,13 @@
 
 name="ssbt"
 rcvar="ssbt_enable"
+start_cmd="ssbt_start"
+stop_cmd=":"
+
+ssbt_start()
+{
+	su -m ${ssbt_user} -c "${command} ${ssbt_flags} &"
+}
 
 command="/usr/local/sbin/ssbt"
 
@@ -25,5 +32,6 @@ load_rc_config $name
 : ${ssbt_dir="/nonexistent"}
 : ${ssbt_user="backup"}
 : ${ssbt_flags="pull"}
+: ${required_dirs=${ssbt_dir}}
 
 run_rc_command "$1"
