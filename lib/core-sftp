@@ -87,7 +87,7 @@ core::sftp::pull(){
 core::sftp::list(){
     local _host="$1" _file _timestamp
 
-    ls -1r "${ssbt_dir}/${_host}" | grep -v ".sha256" 2>/dev/null | \
+    ls -1r "${ssbt_dir}/${_host}" | grep -v ".ssbt." | grep -v ".sha256" 2>/dev/null | \
     while read _file; do
         _timestamp=${_file##*-}
         _timestamp=${_timestamp%%.*}
