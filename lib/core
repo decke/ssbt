@@ -44,7 +44,7 @@ core::cron(){
 #
 core::clean(){
     local _host _filter _type _backup _timestamp _datediff
-    local _keepdaily _keepweekly _limitdaily _limitweekly
+    local _keepdaily _keepweekly _limitdaily _limitweekly _weekday
 
     _filter="$1"
 
@@ -65,9 +65,15 @@ core::clean(){
             _datediff=`util::datediff "${_timestamp}"`
             _limitdaily=`expr 86400 '*' '(' ${_keepdaily} + 1 ')'`
             _limitweekly=`expr 604800 '*' '(' ${_keepweekly} + 1 ')'`
+            _weekday=`date -j ${_timestamp} '+%w'`
 
             if [ "${_datediff}" -lt "${_limitdaily}" ]; then
                 util::log "${_host}" "Keep daily backup ${_backup}"
+                continue
+            fi
+
+            if [ ${_keepweekly} -gt 0 -a ${_datediff} -lt 604800 -a ${_weekday} -eq 0 ]; then
+                util::log "${_host}" "Keep sundays weekly backup ${_backup}"
                 continue
             fi
 
