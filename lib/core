@@ -63,8 +63,8 @@ core::clean(){
             _timestamp=`echo "${_line}" | cut -d^ -f2`
 
             _datediff=`util::datediff "${_timestamp}"`
-            _limitdaily=`expr 86400 '*' '(' ${_keepdaily} + 1 ')'`
-            _limitweekly=`expr 604800 '*' '(' ${_keepweekly} + 1 ')'`
+            _limitdaily=`expr 86400 '*' ${_keepdaily}`
+            _limitweekly=`expr 604800 '*' ${_keepweekly}`
             _weekday=`date -j ${_timestamp} '+%w'`
 
             if [ "${_datediff}" -lt "${_limitdaily}" ]; then
