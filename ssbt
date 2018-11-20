@@ -31,6 +31,8 @@ if [ -e "${0%/*}/lib" ]; then
    LIB="${0%/*}/lib"
 elif [ -e "/usr/local/lib/ssbt" ]; then
    LIB="/usr/local/lib/ssbt"
+elif [ -e "/usr/lib/ssbt" ]; then
+   LIB="/usr/lib/ssbt"
 else
    echo "unable to locate ssbt libraries"
    exit 1
