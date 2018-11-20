@@ -119,7 +119,7 @@ core::pull(){
 #
 core::status(){
     local _outdated_only
-    local _host _type _line _backup _timestamp _date_diff _date_str
+    local _host _type _line _fqdn _backup _timestamp _date_diff _date_str
     local _datediff_max
 
     [ "$1" = "-i" ] && _outdated_only="y"
@@ -128,8 +128,10 @@ core::status(){
     {
         printf "%s^%b\n" "NAME" "LAST BACKUP"
 
-        ls -1 "${ssbt_dir}" 2>/dev/null | \
-        while read _host; do
+        ls -1 "${ssbt_dir}" 2>/dev/null | awk -F . '{ b=$9 FS $8 FS $7 FS $6 FS $5 FS $4 FS $3 FS $2 FS $1; gsub(/^[.]+/, "", b); print b}' | sort | \
+        while read _fqdn; do
+            _host=`echo ${_fqdn} | awk -F . '{ b=$9 FS $8 FS $7 FS $6 FS $5 FS $4 FS $3 FS $2 FS $1; gsub(/^[.]+/, "", b); print b}'`
+
             config::load "${_host}"
             config::get "_type" "type" "sftp"
             config::get "_datediff_max" "frequ" "86400"
@@ -153,7 +155,7 @@ core::status(){
             fi
 
             if [ -z "${_outdated_only}" -o ${_date_diff} -gt ${_datediff_max} ]; then
-                printf "%s^%b\n" "${_host}" "${_date_str}"
+                printf "%s^%b\n" "${_fqdn}" "${_date_str}"
             fi
         done
     } | column -ts^
