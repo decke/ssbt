@@ -201,8 +201,22 @@ util::checkyesno(){
 util::datediff(){
     local _stamp1 _stamp2
 
-    _stamp1=`date -j $1 '+%s'`
+    _stamp1=`util::dateformat "$1" '+%s'`
     _stamp2=`date '+%s'`
 
     printf "%s" `expr ${_stamp2} - ${_stamp1}`
+}
+
+util::dateformat(){
+    local _stamp="$1" _format="$2"
+    local _date _time
+
+    _date=`echo -n "${_stamp}" | cut -b1-8`
+    _time=`echo -n "${_stamp}" | cut -b9-`
+
+    if `date --version 2>/dev/null | grep GNU` ; then
+        date -d "${_date} ${_time}" "${_format}"
+    else
+        date -j "${_date}${_time}" "${_format}"
+    fi
 }

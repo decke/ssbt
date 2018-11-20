@@ -65,7 +65,7 @@ core::clean(){
             _datediff=`util::datediff "${_timestamp}"`
             _limitdaily=`expr 86400 '*' ${_keepdaily}`
             _limitweekly=`expr 604800 '*' ${_keepweekly}`
-            _weekday=`date -j ${_timestamp} '+%w'`
+            _weekday=`util::dateformat "${_timestamp}" '+%w'`
 
             if [ "${_datediff}" -lt "${_limitdaily}" ]; then
                 util::log "${_host}" "Keep daily backup ${_backup}"
@@ -142,7 +142,7 @@ core::status(){
                 _timestamp=`echo "${_line}" | cut -d^ -f2`
 
                 _date_diff=`util::datediff "${_timestamp}"`
-                _date_str=`date -j ${_timestamp} +"%Y/%m/%d %H:%M"`
+                _date_str=`util::dateformat "${_timestamp}" "+%Y/%m/%d %H:%M"`
 
                 if [ ${_date_diff} -gt ${_datediff_max} ]; then
                     _date_str="\033[0;31m${_date_str}\033[0m"
@@ -221,7 +221,7 @@ core::details(){
             _backup=`echo "${_line}" | cut -d^ -f1`
             _timestamp=`echo "${_line}" | cut -d^ -f2`
 
-            printf "%s^%s\n" "${_backup}" "`date -j ${_timestamp} +"%Y/%m/%d %H:%M"`"
+            printf "%s^%s\n" "${_backup}" "`util::dateformat "${_timestamp}" "+%Y/%m/%d %H:%M"`"
         done
     } | column -ts^
 }
