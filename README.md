@@ -169,8 +169,9 @@ So here is a backup script as an example:
 
 ## Configuration
 
-A global config file exists in `/backup/.ssbt.conf` and all parameters can be
-overwritten in a host configuration in `/backup/{host}/.ssbt.conf`:
+A global config file exists in `/backup/.ssbt.conf` (or `~/.ssbt.conf` on
+Linux) and all parameters can be overwritten in a host configuration in
+`/backup/{host}/.ssbt.conf`:
 
     type="sftp|manual|rsync|rsynczfs"
     frequ=86400
