@@ -28,8 +28,12 @@
 
 VERSION=1.0.1-dev
 
-. /etc/rc.subr
-load_rc_config "ssbt"
+if [ -f "/etc/rc.subr" ]; then
+   . /etc/rc.subr
+   load_rc_config "ssbt"
+elif [ -f "$HOME/.ssbt.conf" ]; then
+   . $HOME/.ssbt.conf
+fi
 
 # create directories as needed
 [ ! -d "${ssbt_dir}" ] && util::err "\$ssbt_dir has not been configured or is not a valid directory"
