@@ -56,7 +56,8 @@ config::get(){
     local _c_key="$2"
     local _c_def="$3"
     local _c_line
-    local IFS=$'\n'
+    local IFS="
+"
 
     for _c_line in ${SSBT_CONFIG}; do
         if [ "${_c_key}" = "${_c_line%%=*}" ]; then
@@ -89,7 +90,8 @@ config::core::get(){
     local _c_key="$2"
     local _c_def="$3"
     local _c_line
-    local IFS=$'\n'
+    local IFS="
+"
 
     for _c_line in ${SSBT_CORE_CONFIG}; do
         if [ "${_c_key}" = "${_c_line%%=*}" ]; then
