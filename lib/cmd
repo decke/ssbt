@@ -72,7 +72,7 @@ cmd::find(){
     for _opt in ${_valid}; do
         # exact match?
         if [ "${_user_cmd}" = "${_opt}" ]; then
-            setvar "${_var}" "${_opt}"
+            cmd::setvar "${_var}" "${_opt}"
             return 0
         fi
 
@@ -85,5 +85,16 @@ cmd::find(){
     done
 
     [ -z "${_found}" ] && return 1
-    setvar "${_var}" "${_choice}"
+    cmd::setvar "${_var}" "${_choice}"
+}
+
+# Export a variable to the environment to make it universally
+# available.
+#
+# @param string _var Variable name
+# @param string _val Variable value
+cmd::setvar(){
+    local _var="$1" _val="$2"
+
+    export "${_var}=${_val}"
 }

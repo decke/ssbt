@@ -60,7 +60,7 @@ config::get(){
 
     for _c_line in ${SSBT_CONFIG}; do
         if [ "${_c_key}" = "${_c_line%%=*}" ]; then
-            setvar "${_c_var}" "${_c_line#*=}"
+            cmd::setvar "${_c_var}" "${_c_line#*=}"
             return 0
         fi
     done
@@ -93,12 +93,12 @@ config::core::get(){
 
     for _c_line in ${SSBT_CORE_CONFIG}; do
         if [ "${_c_key}" = "${_c_line%%=*}" ]; then
-            setvar "${_c_var}" "${_c_line#*=}"
+            cmd::setvar "${_c_var}" "${_c_line#*=}"
             return 0
         fi
     done
 
     # not found
-    setvar "${_c_var}" "${_c_def}"
+    cmd::setvar "${_c_var}" "${_c_def}"
     return 1
 }
