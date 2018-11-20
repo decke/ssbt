@@ -14,6 +14,11 @@ MKDIR=/bin/mkdir
 PROG=ssbt
 MAN=$(PROG).8
 
+patch:
+	# for dash compatibility
+	sed -i 's/::/__/g' lib/* ssbt
+	sed -i 's|/bin/sh|/bin/dash|g' lib/* ssbt
+
 install:
 	$(MKDIR) -p $(BINDIR)
 	$(INSTALL) -m 555 $(PROG) $(BINDIR)/
