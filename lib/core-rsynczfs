@@ -29,7 +29,7 @@
 
 # Get ZFS filesystem for mountpoint
 #
-core::rsync+zfs::getfs(){
+core::rsynczfs::getfs(){
     local _host="$1" _mountpoint
 
     _mountpoint="${ssbt_dir}/${_host}"
@@ -40,7 +40,7 @@ core::rsync+zfs::getfs(){
 
 # Transfer files from a remote location via rsync over ssh
 #
-core::rsync+zfs::pull(){
+core::rsynczfs::pull(){
     local _host="$1" _filesystem _snapshot
     local _remote_user _remote_dir _remote_url _local_url _rsync_flags
 
@@ -48,7 +48,7 @@ core::rsync+zfs::pull(){
     config::get "_remote_dir" "remote_dir" "/data"
     config::get "_rsync_flags" "rsync_flags" "-av --delete"
 
-    _filesystem=`core::rsync+zfs::getfs "${_host}"`
+    _filesystem=`core::rsynczfs::getfs "${_host}"`
     _snapshot=`date "+%Y%m%d%H%M.%S"`
     _remote_url="${_remote_user}@${_host}:${_remote_dir}/"
     _local_url="${ssbt_dir}/${_host}/"
@@ -64,10 +64,10 @@ core::rsync+zfs::pull(){
 
 # List local backups (youngest first)
 #
-core::rsync+zfs::list(){
+core::rsynczfs::list(){
     local _host="$1" _filesystem _snapshot _timestamp
 
-    _filesystem=`core::rsync+zfs::getfs "${_host}"`
+    _filesystem=`core::rsynczfs::getfs "${_host}"`
 
     zfs list -Hp -t snapshot -o name -r "${_filesystem}" | sort -r | \
     while read _snapshot; do
@@ -79,7 +79,7 @@ core::rsync+zfs::list(){
 
 # Remove backup
 #
-core::rsync+zfs::remove(){
+core::rsynczfs::remove(){
     local _host="$1" _backup="$2"
 
     zfs destroy "${_backup}" \

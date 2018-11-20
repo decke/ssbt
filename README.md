@@ -79,7 +79,7 @@ to enable it:
 #### ZFS
 
 If you are using ZFS and have bigger amounts of slowly changing data then
-the type rsync+zfs will be relevant for you. It allows to transfer changed
+the type rsynczfs will be relevant for you. It allows to transfer changed
 data with rsync and use ZFS snapshots for keeping multiple backups of that
 data.
 
@@ -172,7 +172,7 @@ So here is a backup script as an example:
 A global config file exists in `/backup/.ssbt.conf` and all parameters can be
 overwritten in a host configuration in `/backup/{host}/.ssbt.conf`:
 
-    type="sftp|manual|rsync|rsync+zfs"
+    type="sftp|manual|rsync|rsynczfs"
     frequ=86400
     staging_dir="/home/backup/staging"
     remote_user="backup"

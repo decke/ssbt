@@ -41,7 +41,7 @@ fi
 . "${LIB}/core"
 . "${LIB}/core-manual"
 . "${LIB}/core-rsync"
-. "${LIB}/core-rsync+zfs"
+. "${LIB}/core-rsynczfs"
 . "${LIB}/core-sftp"
 . "${LIB}/cmd"
 . "${LIB}/config"

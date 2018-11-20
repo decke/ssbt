@@ -204,7 +204,7 @@ core::details(){
         [ "${_type}" != "manual" -a "${_type}" != "rsync" ] && printf "%s^%s\n" "keep_daily" "${_keep_daily}"
         [ "${_type}" != "manual" -a "${_type}" != "rsync" ] && printf "%s^%s\n" "keep_weekly" "${_keep_weekly}"
 
-        [ "${_type}" = "rsync" -o "${_type}" = "rsync+zfs" ] && printf "%s^%s\n" "rsync_flags" "${_rsync_flags}"
+        [ "${_type}" = "rsync" -o "${_type}" = "rsynczfs" ] && printf "%s^%s\n" "rsync_flags" "${_rsync_flags}"
 
         [ -n "${_prepull_cmd}" ] && printf "%s^%s\n" "prepull_cmd" "${_prepull_cmd}"
         [ -n "${_postpull_cmd}" ] && printf "%s^%s\n" "postpull_cmd" "${_postpull_cmd}"
