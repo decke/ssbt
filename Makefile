@@ -3,7 +3,7 @@
 #
 
 PREFIX?=/usr/local
-BINDIR=$(DESTDIR)$(PREFIX)/sbin
+BINDIR=$(DESTDIR)$(PREFIX)/bin
 LIBDIR=$(DESTDIR)$(PREFIX)/lib/ssbt
 RCDIR=$(DESTDIR)$(PREFIX)/etc/rc.d
 
