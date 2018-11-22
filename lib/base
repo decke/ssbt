@@ -36,10 +36,10 @@ elif [ -f "$HOME/.ssbt.conf" ]; then
 fi
 
 # create directories as needed
-[ ! -d "${ssbt_dir}" ] && util::err "\$ssbt_dir has not been configured or is not a valid directory"
+[ ! -d "${ssbt_dir}" ] && util__err "\$ssbt_dir has not been configured or is not a valid directory"
 
 # load core configuration
-config::core::load
+config__core__load
 
 # run the requested command
-cmd::parse "$@"
+cmd__parse "$@"

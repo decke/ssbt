@@ -29,18 +29,18 @@
 
 # Transfer files from a remote location
 #
-core::manual::pull(){
+core__manual__pull(){
     local _host="$1"
 }
 
 # List backups for a host (youngest first)
 #
-core::manual::list(){
+core__manual__list(){
     local _host="$1"
 }
 
 # Remove backup from archive
 #
-core::manual::remove(){
+core__manual__remove(){
     local _host="$1" _backup="$2"
 }

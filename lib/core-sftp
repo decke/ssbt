@@ -29,62 +29,62 @@
 
 # Transfer files from a remote location via sftp
 #
-core::sftp::pull(){
+core__sftp__pull(){
     local _host _file _remote_file _staging_dir _local_user _local_group
     local _remote_user _remote_dir _sha256bin
 
     _host="$1"
 
-    config::get "_staging_dir" "staging_dir" "/home/backup/staging"
-    config::get "_local_user" "local_user" "backup"
-    config::get "_local_group" "local_group" "backup"
-    config::get "_remote_user" "remote_user" "backup"
-    config::get "_remote_dir" "remote_dir" "/data"
+    config__get "_staging_dir" "staging_dir" "/home/backup/staging"
+    config__get "_local_user" "local_user" "backup"
+    config__get "_local_group" "local_group" "backup"
+    config__get "_remote_user" "remote_user" "backup"
+    config__get "_remote_dir" "remote_dir" "/data"
 
     if [ -n `which sha256 sha256sum 2>/dev/null` ] ; then
         _sha256bin=`which sha256 sha256sum 2>/dev/null`
     fi
 
-    rm -f ${_staging_dir}/* || util::err "unable to clean staging directory ${_staging_dir}"
+    rm -f ${_staging_dir}/* || util__err "unable to clean staging directory ${_staging_dir}"
 
-    util::log "${_host}" "checking ${_remote_dir} on ${_host}"
+    util__log "${_host}" "checking ${_remote_dir} on ${_host}"
 
     for _remote_file in `echo "ls ${_remote_dir}" | \
         sftp -qb - "${_remote_user}@${_host}" | grep -v "sftp>" | grep "^${_remote_dir}" `
     do
         _file="${_staging_dir}/${_remote_file##*/}"
 
-        util::log "${_host}" "copying ${_file} to ${_staging_dir}"
+        util__log "${_host}" "copying ${_file} to ${_staging_dir}"
         echo "get ${_remote_file} ${_staging_dir}/" | sftp -qfb - "${_remote_user}@${_host}" \
-            || util::log "${_host}" "sftp get ${_remote_file} failed"
+            || util__log "${_host}" "sftp get ${_remote_file} failed"
 
         if [ -n "${_sha256bin}" ]; then
-            util::log "${_host}" "generating sha256 checksum file"
+            util__log "${_host}" "generating sha256 checksum file"
             ${_sha256bin} "${_file}" > "${_file}.sha256" \
-                || util::log "${_host}" "sha256 ${_file} failed"
+                || util__log "${_host}" "sha256 ${_file} failed"
         fi
 
-        util::log "${_host}" "moving ${_file} to ${ssbt_dir}/${_host}"
+        util__log "${_host}" "moving ${_file} to ${ssbt_dir}/${_host}"
         chown ${_local_user}:${_local_group} "${_staging_dir}"/* \
-            || util::log "${_host}" "chown ${_local_user}:${_local_group} failed on ${_staging_dir}"
+            || util__log "${_host}" "chown ${_local_user}:${_local_group} failed on ${_staging_dir}"
 
         mv -n "${_file}" "${ssbt_dir}/${_host}" \
-            || util::log "${_host}" "Moving ${_file} to ${ssbt_dir}/${_host} failed"
+            || util__log "${_host}" "Moving ${_file} to ${ssbt_dir}/${_host} failed"
 
         if [ -n "${_sha256bin}" ]; then
             mv -n "${_file}.sha256" "${ssbt_dir}/${_host}" \
-                || util::log "${_host}" "Moving ${_file}.sha256 to ${ssbt_dir}/${_host} failed"
+                || util__log "${_host}" "Moving ${_file}.sha256 to ${ssbt_dir}/${_host} failed"
         fi
 
-        util::log "${_host}" "removing ${_remote_file} on ${_host}"
+        util__log "${_host}" "removing ${_remote_file} on ${_host}"
         echo "rm ${_remote_file}" | sftp -qb - "${_remote_user}@${_host}" \
-            || util::log "${_host}" "sftp rm ${_remote_file} failed"
+            || util__log "${_host}" "sftp rm ${_remote_file} failed"
     done
 }
 
 # List local backed up files (youngest first)
 #
-core::sftp::list(){
+core__sftp__list(){
     local _host="$1" _file _timestamp
 
     ls -1r "${ssbt_dir}/${_host}" | grep -v ".ssbt." | grep -v ".sha256" 2>/dev/null | \
@@ -98,11 +98,11 @@ core::sftp::list(){
 
 # Remove files from archive
 #
-core::sftp::remove(){
+core__sftp__remove(){
     local _host="$1" _file="$2"
 
     [ -f "${ssbt_dir}/${_host}/${_file}" ] \
-        || util::log "${_host}" "Remove ${_file} failed because does not exist"
+        || util__log "${_host}" "Remove ${_file} failed because does not exist"
 
     _file="${ssbt_dir}/${_host}/${_file}"
 
@@ -110,6 +110,6 @@ core::sftp::remove(){
 
     if [ -f "${_file}.sha256" ]; then
         _file="${_file}.sha256"
-        rm "${_file}" || util::err "Unable to remove ${_file}"
+        rm "${_file}" || util__err "Unable to remove ${_file}"
     fi
 }

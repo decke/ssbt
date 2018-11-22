@@ -30,19 +30,19 @@
 # 'ssbt cron'
 # Command to run periodically (equivalent to pull + clean + status -i)
 #
-core::cron(){
-    core::pull >/dev/null
-    core::clean >/dev/null
+core__cron(){
+    core__pull >/dev/null
+    core__clean >/dev/null
 
-    if [ `core::status "-i" | tail -n +2 | wc -l` -gt 0 ]; then
-        core::status "-i"
+    if [ `core__status "-i" | tail -n +2 | wc -l` -gt 0 ]; then
+        core__status "-i"
     fi
 }
 
 # 'ssbt clean'
 # Cleanup archive from old backups
 #
-core::clean(){
+core__clean(){
     local _host _filter _type _backup _timestamp _datediff
     local _keepdaily _keepweekly _limitdaily _limitweekly _weekday
 
@@ -52,39 +52,39 @@ core::clean(){
     while read _host; do
         [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
 
-        config::load "${_host}"
-        config::get "_type" "type" "sftp"
-        config::get "_keepdaily" "keep_daily" "3"
-        config::get "_keepweekly" "keep_weekly" "2"
+        config__load "${_host}"
+        config__get "_type" "type" "sftp"
+        config__get "_keepdaily" "keep_daily" "3"
+        config__get "_keepweekly" "keep_weekly" "2"
 
-        core::${_type}::list "${_host}" | \
+        core__${_type}__list "${_host}" | \
         while read _line; do
             _backup=`echo "${_line}" | cut -d^ -f1`
             _timestamp=`echo "${_line}" | cut -d^ -f2`
 
-            _datediff=`util::datediff "${_timestamp}"`
+            _datediff=`util__datediff "${_timestamp}"`
             _limitdaily=`expr 86400 '*' ${_keepdaily}`
             _limitweekly=`expr 604800 '*' ${_keepweekly}`
-            _weekday=`util::dateformat "${_timestamp}" '+%w'`
+            _weekday=`util__dateformat "${_timestamp}" '+%w'`
 
             if [ "${_datediff}" -lt "${_limitdaily}" ]; then
-                util::log "${_host}" "Keep daily backup ${_backup}"
+                util__log "${_host}" "Keep daily backup ${_backup}"
                 continue
             fi
 
             if [ ${_keepweekly} -gt 0 -a ${_datediff} -lt 604800 -a ${_weekday} -eq 0 ]; then
-                util::log "${_host}" "Keep sundays weekly backup ${_backup}"
+                util__log "${_host}" "Keep sundays weekly backup ${_backup}"
                 continue
             fi
 
             if [ ${_datediff} -gt 604800 -a ${_datediff} -lt ${_limitweekly} ]; then
-                util::log "${_host}" "Keep weekly backup ${_backup}"
+                util__log "${_host}" "Keep weekly backup ${_backup}"
                 continue
             fi
 
-            util::log "${_host}" "Removing ${_backup} from ${_host}"
-            core::${_type}::remove "${_host}" "${_backup}" || \
-                util::err "Unable to remove ${_backup}"
+            util__log "${_host}" "Removing ${_backup} from ${_host}"
+            core__${_type}__remove "${_host}" "${_backup}" || \
+                util__err "Unable to remove ${_backup}"
         done
     done
 }
@@ -92,7 +92,7 @@ core::clean(){
 # 'ssbt pull'
 # Pull backups from a remote host
 #
-core::pull(){
+core__pull(){
     local _host _filter _type _precmd _postcmd
 
     _filter="$1"
@@ -101,14 +101,14 @@ core::pull(){
     while read _host; do
         [ -n "${_filter}" -a "${_filter}" != "${_host}" ] && continue
 
-        config::load "${_host}"
-        config::get "_type" "type" "sftp"
-        config::get "_precmd" "prepull_cmd" ""
-        config::get "_postcmd" "postpull_cmd" ""
+        config__load "${_host}"
+        config__get "_type" "type" "sftp"
+        config__get "_precmd" "prepull_cmd" ""
+        config__get "_postcmd" "postpull_cmd" ""
 
         [ -n "${_precmd}" ] && ${_precmd}
 
-        core::${_type}::pull "${_host}"
+        core__${_type}__pull "${_host}"
 
         [ -n "${_postcmd}" ] && ${_postcmd}
     done
@@ -117,7 +117,7 @@ core::pull(){
 # 'ssbt status'
 # Lists all hosta and their backup status
 #
-core::status(){
+core__status(){
     local _outdated_only
     local _host _type _line _fqdn _backup _timestamp _date_diff _date_str
     local _datediff_max
@@ -132,17 +132,17 @@ core::status(){
         while read _fqdn; do
             _host=`echo ${_fqdn} | awk -F . '{ b=$9 FS $8 FS $7 FS $6 FS $5 FS $4 FS $3 FS $2 FS $1; gsub(/^[.]+/, "", b); print b}'`
 
-            config::load "${_host}"
-            config::get "_type" "type" "sftp"
-            config::get "_datediff_max" "frequ" "86400"
+            config__load "${_host}"
+            config__get "_type" "type" "sftp"
+            config__get "_datediff_max" "frequ" "86400"
 
-            _line=`core::${_type}::list "${_host}" | head -n 1 2>/dev/null`
+            _line=`core__${_type}__list "${_host}" | head -n 1 2>/dev/null`
             if [ -n "${_line}" ] ; then
                 _backup=`echo "${_line}" | cut -d^ -f1`
                 _timestamp=`echo "${_line}" | cut -d^ -f2`
 
-                _date_diff=`util::datediff "${_timestamp}"`
-                _date_str=`util::dateformat "${_timestamp}" "+%Y/%m/%d %H:%M"`
+                _date_diff=`util__datediff "${_timestamp}"`
+                _date_str=`util__dateformat "${_timestamp}" "+%Y/%m/%d %H:%M"`
 
                 if [ ${_date_diff} -gt ${_datediff_max} ]; then
                     _date_str="\033[0;31m${_date_str}\033[0m"
@@ -163,28 +163,28 @@ core::status(){
 
 # lists details about a single host
 #
-core::details(){
+core__details(){
     local _host="$1" _type _frequ _remote_user _remote_dir _local_user _local_group
     local _keep_daily _keep_weekly _rsync_flags _prepull_cmd _postpull_cmd
     local _line _backup _timestamp
 
-    [ -z "${_host}" ] && util::err "Parameter host needs to be set"
-    [ ! -d "${ssbt_dir}/${_host}" ] && util::err "Host ${_host} does not exist"
+    [ -z "${_host}" ] && util__err "Parameter host needs to be set"
+    [ ! -d "${ssbt_dir}/${_host}" ] && util__err "Host ${_host} does not exist"
 
-    config::load "${_host}"
-    config::get "_type" "type" "sftp"
-    config::get "_frequ" "frequ" "86400"
-    config::get "_staging_dir" "staging_dir" "/home/backup/staging"
-    config::get "_remote_user" "remote_user" "backup"
-    config::get "_remote_dir" "remote_dir" "/data"
-    config::get "_local_user" "local_user" "backup"
-    config::get "_local_group" "local_group" "backup"
-    config::get "_keep_daily" "keep_daily" "3"
-    config::get "_keep_weekly" "keep_weekly" "2"
-    config::get "_frequ" "frequ" "86400"
-    config::get "_rsync_flags" "rsync_flags" "-av --delete"
-    config::get "_prepull_cmd" "prepull_cmd" ""
-    config::get "_postpull_cmd" "postpull_cmd" ""
+    config__load "${_host}"
+    config__get "_type" "type" "sftp"
+    config__get "_frequ" "frequ" "86400"
+    config__get "_staging_dir" "staging_dir" "/home/backup/staging"
+    config__get "_remote_user" "remote_user" "backup"
+    config__get "_remote_dir" "remote_dir" "/data"
+    config__get "_local_user" "local_user" "backup"
+    config__get "_local_group" "local_group" "backup"
+    config__get "_keep_daily" "keep_daily" "3"
+    config__get "_keep_weekly" "keep_weekly" "2"
+    config__get "_frequ" "frequ" "86400"
+    config__get "_rsync_flags" "rsync_flags" "-av --delete"
+    config__get "_prepull_cmd" "prepull_cmd" ""
+    config__get "_postpull_cmd" "postpull_cmd" ""
 
     # pass everything below here to column(1)
     {
@@ -216,12 +216,12 @@ core::details(){
     {
         printf "%s^%s\n" "BACKUP" "BACKUP DATE"
 
-        core::${_type}::list "${_host}" | \
+        core__${_type}__list "${_host}" | \
         while read _line; do
             _backup=`echo "${_line}" | cut -d^ -f1`
             _timestamp=`echo "${_line}" | cut -d^ -f2`
 
-            printf "%s^%s\n" "${_backup}" "`util::dateformat "${_timestamp}" "+%Y/%m/%d %H:%M"`"
+            printf "%s^%s\n" "${_backup}" "`util__dateformat "${_timestamp}" "+%Y/%m/%d %H:%M"`"
         done
     } | column -ts^
 }

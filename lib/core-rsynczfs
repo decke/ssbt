@@ -29,45 +29,45 @@
 
 # Get ZFS filesystem for mountpoint
 #
-core::rsynczfs::getfs(){
+core__rsynczfs__getfs(){
     local _host="$1" _mountpoint
 
     _mountpoint="${ssbt_dir}/${_host}"
 
     zfs list -Hp -t filesystem -o name "${_mountpoint}" \
-        || util::err "ZFS Filesystem for ${_mountpoint} not found!"
+        || util__err "ZFS Filesystem for ${_mountpoint} not found!"
 }
 
 # Transfer files from a remote location via rsync over ssh
 #
-core::rsynczfs::pull(){
+core__rsynczfs__pull(){
     local _host="$1" _filesystem _snapshot
     local _remote_user _remote_dir _remote_url _local_url _rsync_flags
 
-    config::get "_remote_user" "remote_user" "backup"
-    config::get "_remote_dir" "remote_dir" "/data"
-    config::get "_rsync_flags" "rsync_flags" "-av --delete"
+    config__get "_remote_user" "remote_user" "backup"
+    config__get "_remote_dir" "remote_dir" "/data"
+    config__get "_rsync_flags" "rsync_flags" "-av --delete"
 
-    _filesystem=`core::rsynczfs::getfs "${_host}"`
+    _filesystem=`core__rsynczfs__getfs "${_host}"`
     _snapshot=`date "+%Y%m%d%H%M.%S"`
     _remote_url="${_remote_user}@${_host}:${_remote_dir}/"
     _local_url="${ssbt_dir}/${_host}/"
 
-    util::log "${_host}" "rsync from ${_remote_url} to ${_local_url}"
+    util__log "${_host}" "rsync from ${_remote_url} to ${_local_url}"
 
     rsync ${_rsync_flags} --exclude .ssbt.conf --exclude .ssbt.log \
         -e "ssh -q" "${_remote_url}" "${_local_url}" \
-        || util::log "${_host}" "rsync failed to ${_host}"
+        || util__log "${_host}" "rsync failed to ${_host}"
 
     zfs snapshot "${_filesystem}@${_snapshot}"
 }
 
 # List local backups (youngest first)
 #
-core::rsynczfs::list(){
+core__rsynczfs__list(){
     local _host="$1" _filesystem _snapshot _timestamp
 
-    _filesystem=`core::rsynczfs::getfs "${_host}"`
+    _filesystem=`core__rsynczfs__getfs "${_host}"`
 
     zfs list -Hp -t snapshot -o name -r "${_filesystem}" | sort -r | \
     while read _snapshot; do
@@ -79,9 +79,9 @@ core::rsynczfs::list(){
 
 # Remove backup
 #
-core::rsynczfs::remove(){
+core__rsynczfs__remove(){
     local _host="$1" _backup="$2"
 
     zfs destroy "${_backup}" \
-        || util::log "${_host}" "Removing ZFS snapshot ${_backup} failed"
+        || util__log "${_host}" "Removing ZFS snapshot ${_backup} failed"
 }

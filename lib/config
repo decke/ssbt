@@ -34,7 +34,7 @@
 # @param string _file full path of the file to read
 # @modifies SSBT_CONFIG
 #
-config::load(){
+config__load(){
     local _host="$1"
     local _file="${ssbt_dir}/${_host}/.ssbt.conf"
 
@@ -51,7 +51,7 @@ config::load(){
 # @param optional string _def default value to return if setting not found
 # @return true if setting found
 #
-config::get(){
+config__get(){
     local _c_var="$1"
     local _c_key="$2"
     local _c_def="$3"
@@ -61,20 +61,20 @@ config::get(){
 
     for _c_line in ${SSBT_CONFIG}; do
         if [ "${_c_key}" = "${_c_line%%=*}" ]; then
-            cmd::setvar "${_c_var}" "${_c_line#*=}"
+            cmd__setvar "${_c_var}" "${_c_line#*=}"
             return 0
         fi
     done
 
     # not found; fallback to global config
-    config::core::get "${_c_var}" "${_c_key}" "${_c_def}"
+    config__core__get "${_c_var}" "${_c_key}" "${_c_def}"
 }
 
 # load core configuration file
 #
 # @modifies SSBT_CORE_CONFIG
 #
-config::core::load(){
+config__core__load(){
     SSBT_CORE_CONFIG=$(grep '^[a-z]' "${ssbt_dir}/.ssbt.conf" 2>/dev/null | awk -F# '{print $1}' | sed -e 's@ *$@@' | tr -d '"')
 }
 
@@ -85,7 +85,7 @@ config::core::load(){
 # @param string _c_def default value if not value
 # @return 0 if found
 #
-config::core::get(){
+config__core__get(){
     local _c_var="$1"
     local _c_key="$2"
     local _c_def="$3"
@@ -95,12 +95,12 @@ config::core::get(){
 
     for _c_line in ${SSBT_CORE_CONFIG}; do
         if [ "${_c_key}" = "${_c_line%%=*}" ]; then
-            cmd::setvar "${_c_var}" "${_c_line#*=}"
+            cmd__setvar "${_c_var}" "${_c_line#*=}"
             return 0
         fi
     done
 
     # not found
-    cmd::setvar "${_c_var}" "${_c_def}"
+    cmd__setvar "${_c_var}" "${_c_def}"
     return 1
 }
