@@ -35,6 +35,10 @@ repository and run `make install`.
     # git clone https://code.bluelife.at/decke/ssbt.git
     # make install
 
+For most Linux distributions you might want to modify `PREFIX`.
+
+    # make PREFIX=/usr install
+
 The only mandatory setup is to set the backup directory for ssbt and make
 sure that it exists. If you want to run ssbt as non root (which is recommended!)
 then make sure the directory has proper owner/group and permissions.
