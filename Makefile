@@ -12,12 +12,8 @@ INSTALL=/usr/bin/install
 MKDIR=/bin/mkdir
 
 PROG=ssbt
-MAN=$(PROG).8
 
-patch:
-	# for dash compatibility
-	sed -i 's/::/__/g' lib/* ssbt
-	sed -i 's|/bin/sh|/bin/dash|g' lib/* ssbt
+all:	install install-rc
 
 install:
 	$(MKDIR) -p $(BINDIR)
@@ -26,8 +22,6 @@ install:
 	$(MKDIR) -p $(LIBDIR)
 	$(INSTALL) lib/* $(LIBDIR)/
 
+install-rc:
 	$(MKDIR) -p $(RCDIR)
 	$(INSTALL) -m 555 rc.d/* $(RCDIR)/
-
-.MAIN: clean
-clean: ;
