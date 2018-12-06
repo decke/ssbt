@@ -8,7 +8,7 @@ collect and archive it.
 * sftp support (including chrooted sftp)
 * rsync support over ssh
 * zfs snapshot support
-* 1st class FreeBSD support (Linux support planned)
+* Supports FreeBSD and Linux
 
 
 ## But why yet another backup solution?
@@ -33,7 +33,7 @@ Either download the release tarball and run `make install` or clone the git
 repository and run `make install`.
 
     # git clone https://code.bluelife.at/decke/ssbt.git
-    # make install
+    # make PREFIX=/usr/local install
 
 For most Linux distributions you might want to modify `PREFIX`.
 
