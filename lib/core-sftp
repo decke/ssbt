@@ -45,7 +45,7 @@ core__sftp__pull(){
         _sha256bin=`which sha256 sha256sum 2>/dev/null`
     fi
 
-    rm -f ${_staging_dir}/* || util__err "unable to clean staging directory ${_staging_dir}"
+    rm -f ${_staging_dir}/* || util__err "unable to clean staging directory ${_staging_dir}" && return 1
 
     util__log "${_host}" "checking ${_remote_dir} on ${_host}"
 
@@ -56,29 +56,29 @@ core__sftp__pull(){
 
         util__log "${_host}" "copying ${_file} to ${_staging_dir}"
         echo "get ${_remote_file} ${_staging_dir}/" | sftp -qfb - "${_remote_user}@${_host}" \
-            || util__log "${_host}" "sftp get ${_remote_file} failed"
+            || util__log "${_host}" "sftp get ${_remote_file} failed" && return 1
 
         if [ -n "${_sha256bin}" ]; then
             util__log "${_host}" "generating sha256 checksum file"
             ${_sha256bin} "${_file}" > "${_file}.sha256" \
-                || util__log "${_host}" "sha256 ${_file} failed"
+                || util__log "${_host}" "sha256 ${_file} failed" && return 1
         fi
 
         util__log "${_host}" "moving ${_file} to ${ssbt_dir}/${_host}"
         chown ${_local_user}:${_local_group} "${_staging_dir}"/* \
-            || util__log "${_host}" "chown ${_local_user}:${_local_group} failed on ${_staging_dir}"
+            || util__log "${_host}" "chown ${_local_user}:${_local_group} failed on ${_staging_dir}" && return 1
 
         mv -n "${_file}" "${ssbt_dir}/${_host}" \
-            || util__log "${_host}" "Moving ${_file} to ${ssbt_dir}/${_host} failed"
+            || util__log "${_host}" "Moving ${_file} to ${ssbt_dir}/${_host} failed" && return 1
 
         if [ -n "${_sha256bin}" ]; then
             mv -n "${_file}.sha256" "${ssbt_dir}/${_host}" \
-                || util__log "${_host}" "Moving ${_file}.sha256 to ${ssbt_dir}/${_host} failed"
+                || util__log "${_host}" "Moving ${_file}.sha256 to ${ssbt_dir}/${_host} failed" && return 1
         fi
 
         util__log "${_host}" "removing ${_remote_file} on ${_host}"
         echo "rm ${_remote_file}" | sftp -qb - "${_remote_user}@${_host}" \
-            || util__log "${_host}" "sftp rm ${_remote_file} failed"
+            || util__log "${_host}" "sftp rm ${_remote_file} failed" && return 1
     done
 }
 

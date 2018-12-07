@@ -44,7 +44,7 @@ core__rsync__pull(){
 
     rsync ${_rsync_flags} --exclude .ssbt.conf --exclude .ssbt.log \
         -e "ssh -q" "${_remote_url}" "${_local_url}" \
-        || util__log "${_host}" "rsync failed to ${_host}"
+        || util__log "${_host}" "rsync failed to ${_host}" && return 1
 
     touch ${ssbt_dir}/${_host}/.ssbt-lastsync
 }
