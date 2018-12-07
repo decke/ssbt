@@ -119,14 +119,14 @@ core__pull(){
 #
 core__status(){
     local _outdated_only
-    local _host _type _line _fqdn _backup _timestamp _date_diff _date_str
+    local _host _type _line _fqdn _backup _timestamp _date_diff _date_str _formattedsize
     local _datediff_max
 
     [ "$1" = "-i" ] && _outdated_only="y"
 
     # pass everything below here to column(1)
     {
-        printf "%s^%b\n" "NAME" "LAST BACKUP"
+        printf "%s^%s^%b\n" "NAME" "SIZE" "LAST BACKUP"
 
         ls -1 "${ssbt_dir}" 2>/dev/null | awk -F . '{ b=$9 FS $8 FS $7 FS $6 FS $5 FS $4 FS $3 FS $2 FS $1; gsub(/^[.]+/, "", b); print b}' | sort | \
         while read _fqdn; do
@@ -154,8 +154,10 @@ core__status(){
                 _date_str="none"
             fi
 
+            _formattedsize=`du -hs "${ssbt_dir}/${_host}/" | cut -f1 | xargs`
+
             if [ -z "${_outdated_only}" -o ${_date_diff} -gt ${_datediff_max} ]; then
-                printf "%s^%b\n" "${_fqdn}" "${_date_str}"
+                printf "%s^%s^%b\n" "${_fqdn}" "${_formattedsize}" "${_date_str}"
             fi
         done
     } | column -ts^
@@ -166,7 +168,7 @@ core__status(){
 core__details(){
     local _host="$1" _type _frequ _remote_user _remote_dir _local_user _local_group
     local _keep_daily _keep_weekly _rsync_flags _prepull_cmd _postpull_cmd
-    local _line _backup _timestamp
+    local _line _backup _timestamp _size _formatteddate _formattedsize
 
     [ -z "${_host}" ] && util__err "Parameter host needs to be set"
     [ ! -d "${ssbt_dir}/${_host}" ] && util__err "Host ${_host} does not exist"
@@ -214,14 +216,18 @@ core__details(){
 
     # pass everything below here to column(1)
     {
-        printf "%s^%s\n" "BACKUP" "BACKUP DATE"
+        printf "%s^%s^%s\n" "BACKUP" "BACKUP DATE" "BACKUP SIZE"
 
         core__${_type}__list "${_host}" | \
         while read _line; do
             _backup=`echo "${_line}" | cut -d^ -f1`
             _timestamp=`echo "${_line}" | cut -d^ -f2`
+            _size=`echo "${_line}" | cut -d^ -f3`
 
-            printf "%s^%s\n" "${_backup}" "`util__dateformat "${_timestamp}" "+%Y/%m/%d %H:%M"`"
+            _formatteddate=`util__dateformat "${_timestamp}" "+%Y/%m/%d %H:%M"`
+            _formattedsize=`util__numberformat "${_size}"`
+
+            printf "%s^%s^%s\n" "${_backup}" "${_formatteddate}" "${_formattedsize}"
         done
     } | column -ts^
 }

@@ -52,7 +52,7 @@ core__rsync__pull(){
 # List local backups (youngest first)
 #
 core__rsync__list(){
-    local _host="$1" _backup _timestamp _file _remote_dir
+    local _host="$1" _backup _timestamp _file _remote_dir _size
 
     _file="${ssbt_dir}/${_host}/.ssbt-lastsync"
 
@@ -60,7 +60,9 @@ core__rsync__list(){
 
     config__get "_remote_dir" "remote_dir" "/data"
 
-    printf "%s^%s\n" "${_remote_dir}" "`date -j -r "${_file}" +"%Y%m%d%H%M"`"
+    _size=`du -hs "${ssbt_dir}/${_host}/"`
+
+    printf "%s^%s^%s\n" "${_remote_dir}" "`date -j -r "${_file}" +"%Y%m%d%H%M"`" "${_size}"
 }
 
 # Remove backup

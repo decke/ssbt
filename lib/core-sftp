@@ -96,14 +96,15 @@ core__sftp__pull(){
 # List local backed up files (youngest first)
 #
 core__sftp__list(){
-    local _host="$1" _file _timestamp
+    local _host="$1" _file _timestamp _size
 
     ls -1r "${ssbt_dir}/${_host}" | grep -v ".ssbt." | grep -v ".sha256" 2>/dev/null | \
     while read _file; do
         _timestamp=${_file##*-}
         _timestamp=${_timestamp%%.*}
+        _size=`stat -f %z "${ssbt_dir}/${_host}/${_file}"`
 
-        printf "%s^%s\n" "${_file}" "${_timestamp}"
+        printf "%s^%s^%d\n" "${_file}" "${_timestamp}" "${_size}"
     done
 }
 

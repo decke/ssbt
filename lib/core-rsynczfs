@@ -65,15 +65,18 @@ core__rsynczfs__pull(){
 # List local backups (youngest first)
 #
 core__rsynczfs__list(){
-    local _host="$1" _filesystem _snapshot _timestamp
+    local _host="$1" _filesystem _snapshot _timestamp _size
 
     _filesystem=`core__rsynczfs__getfs "${_host}"`
 
-    zfs list -Hp -t snapshot -o name -r "${_filesystem}" | sort -r | \
-    while read _snapshot; do
+    zfs list -Hp -t snapshot -o name,used -r "${_filesystem}" | sort -r | \
+    while read _line; do
+        _snapshot=`echo "${_line}" | cut -f1`
+        _size=`echo "${_line}" | cut -f2`
+
         _timestamp="${_snapshot##*@}"
 
-        printf "%s^%s\n" "${_snapshot}" "${_timestamp}"
+        printf "%s^%s^%s\n" "${_snapshot}" "${_timestamp}" "${_size}"
     done
 }
 

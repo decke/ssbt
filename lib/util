@@ -220,3 +220,17 @@ util__dateformat(){
         date -j "${_date}${_time}" "${_format}"
     fi
 }
+
+util__numberformat(){
+    local _size="$1"
+    local _units="B KiB MiB GiB TiB PiB"
+    local _unit
+
+    for X in ${_units}; do
+        _unit=$X
+        test ${_size%.*} -lt 1024 && break;
+        _size=`echo "${_size} / 1024" | bc -l`
+    done
+
+    printf "%.1f %s\n" ${_size} ${_unit}
+}
